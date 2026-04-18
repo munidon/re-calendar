@@ -50,12 +50,13 @@
   <!-- 세부계획서 전체화면 오버레이 -->
   <div class="plan-overlay" id="planOverlay">
     <div class="plan-header">
-      <span class="plan-title">공인중개사 세부계획서</span>
+      <button class="plan-nav-btn" id="planPrevPage">◀</button>
+      <span class="plan-page-info" id="planPageInfo">— / —</span>
+      <button class="plan-nav-btn" id="planNextPage">▶</button>
       <button class="plan-close" id="planClose">✕ 닫기</button>
     </div>
-    <iframe class="plan-frame" src="plan.pdf" id="planFrame"></iframe>
-    <div class="plan-fallback" id="planFallback">
-      <a href="plan.pdf" target="_blank" class="plan-open-btn">새 탭에서 열기</a>
+    <div class="plan-canvas-wrap">
+      <canvas id="planCanvas"></canvas>
     </div>
   </div>
 
@@ -72,6 +73,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>

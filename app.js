@@ -521,20 +521,54 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
 
-// ===== 세부계획서 =====
+// ===== 세부계획서 (PDF.js) =====
+let pdfDoc = null;
+let pdfPage = 1;
+let pdfTotal = 0;
+
 function initPlanViewer() {
   const fab = document.getElementById('planFab');
   const overlay = document.getElementById('planOverlay');
   const closeBtn = document.getElementById('planClose');
-  const frame = document.getElementById('planFrame');
-  const fallback = document.getElementById('planFallback');
+  const prevBtn = document.getElementById('planPrevPage');
+  const nextBtn = document.getElementById('planNextPage');
+  const pageInfo = document.getElementById('planPageInfo');
+  const canvas = document.getElementById('planCanvas');
 
-  fab.addEventListener('click', () => overlay.classList.add('show'));
-  closeBtn.addEventListener('click', () => overlay.classList.remove('show'));
-  frame.addEventListener('error', () => {
-    frame.style.display = 'none';
-    fallback.style.display = 'flex';
+  // eslint-disable-next-line no-undef
+  const pdfjsLib = window.pdfjsLib;
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  async function renderPage(num) {
+    const page = await pdfDoc.getPage(num);
+    const containerWidth = canvas.parentElement.clientWidth;
+    const viewport = page.getViewport({ scale: 1 });
+    const scale = containerWidth / viewport.width;
+    const scaled = page.getViewport({ scale });
+
+    canvas.width = scaled.width;
+    canvas.height = scaled.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: scaled }).promise;
+
+    pdfPage = num;
+    pageInfo.textContent = `${num} / ${pdfTotal}`;
+    prevBtn.disabled = num <= 1;
+    nextBtn.disabled = num >= pdfTotal;
+  }
+
+  fab.addEventListener('click', async () => {
+    overlay.classList.add('show');
+    if (!pdfDoc) {
+      pdfDoc = await pdfjsLib.getDocument('plan.pdf').promise;
+      pdfTotal = pdfDoc.numPages;
+    }
+    renderPage(pdfPage);
   });
+
+  closeBtn.addEventListener('click', () => overlay.classList.remove('show'));
+  prevBtn.addEventListener('click', () => { if (pdfPage > 1) renderPage(pdfPage - 1); });
+  nextBtn.addEventListener('click', () => { if (pdfPage < pdfTotal) renderPage(pdfPage + 1); });
 }
 
 // ===== 초기화 =====
