@@ -544,11 +544,14 @@ function initPlanViewer() {
     const page = await pdfDoc.getPage(num);
     const containerWidth = canvas.parentElement.clientWidth;
     const viewport = page.getViewport({ scale: 1 });
-    const scale = containerWidth / viewport.width;
+    const dpr = window.devicePixelRatio || 1;
+    const scale = (containerWidth / viewport.width) * dpr;
     const scaled = page.getViewport({ scale });
 
     canvas.width = scaled.width;
     canvas.height = scaled.height;
+    canvas.style.width = (scaled.width / dpr) + 'px';
+    canvas.style.height = (scaled.height / dpr) + 'px';
     await page.render({ canvasContext: canvas.getContext('2d'), viewport: scaled }).promise;
 
     pdfPage = num;
