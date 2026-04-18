@@ -23,7 +23,7 @@ const SUBJECTS = [
 const TAB_NAMES = ['기본이론', '핵심요약', '기출문제', '예상문제', '동형모의', '적중100선'];
 
 const TAB_CONFIG = {
-  '기본이론': { '부동산학개론': 52, '민법': 52, '공인중개사법 및 실무': 40, '부동산공시법': 40, '부동산세법': 40, '부동산공법': 49 },
+  '기본이론': { '부동산학개론': 52, '민법': 50, '공인중개사법 및 실무': 40, '부동산공시법': 40, '부동산세법': 40, '부동산공법': 49 },
   '핵심요약': { '부동산학개론': 36, '민법': 36, '공인중개사법 및 실무': 32, '부동산공시법': 32, '부동산세법': 32, '부동산공법': 32 },
   '기출문제': null,
   '예상문제': null,
@@ -521,6 +521,22 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
 
+// ===== 세부계획서 =====
+function initPlanViewer() {
+  const fab = document.getElementById('planFab');
+  const overlay = document.getElementById('planOverlay');
+  const closeBtn = document.getElementById('planClose');
+  const frame = document.getElementById('planFrame');
+  const fallback = document.getElementById('planFallback');
+
+  fab.addEventListener('click', () => overlay.classList.add('show'));
+  closeBtn.addEventListener('click', () => overlay.classList.remove('show'));
+  frame.addEventListener('error', () => {
+    frame.style.display = 'none';
+    fallback.style.display = 'flex';
+  });
+}
+
 // ===== 초기화 =====
 async function init() {
   await loadFromCloud();
@@ -528,6 +544,7 @@ async function init() {
   renderTabs();
   renderProgress();
   renderCalendar();
+  initPlanViewer();
 }
 
 init();
