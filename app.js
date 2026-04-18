@@ -1,3 +1,19 @@
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+// ===== Firebase 설정 =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAClOV4xinnSx5GyphVmDVItB689Hq9zO0",
+  authDomain: "re-calendar-fcf87.firebaseapp.com",
+  projectId: "re-calendar-fcf87",
+  storageBucket: "re-calendar-fcf87.firebasestorage.app",
+  messagingSenderId: "895510421986",
+  appId: "1:895510421986:web:5cf3fc6dcae680b2a2d9bb"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
 // ===== 데이터 설정 =====
 const SUBJECTS = [
   '부동산학개론', '민법', '공인중개사법 및 실무',
@@ -15,28 +31,151 @@ const TAB_CONFIG = {
   '적중100선': null
 };
 
-const MIN_MONTH = 2;  // 3월 (0-indexed)
-const MAX_MONTH = 9;  // 10월 (0-indexed)
+const MIN_MONTH = 2;
+const MAX_MONTH = 9;
 const YEAR = 2026;
 
 // ===== 상태 =====
 let currentTab = '기본이론';
-let currentMonth = new Date().getMonth(); // 현재 월
+let currentMonth = new Date().getMonth();
 let selectedDate = null;
 let modalTab = '기본이론';
 
-// 범위 제한
 if (currentMonth < MIN_MONTH) currentMonth = MIN_MONTH;
 if (currentMonth > MAX_MONTH) currentMonth = MAX_MONTH;
 
-// ===== localStorage =====
+// ===== 기기 코드 =====
+function generateCode() {
+  return Math.random().toString(36).substr(2, 8).toUpperCase();
+}
+
+function getDeviceCode() {
+  let code = localStorage.getItem('deviceCode');
+  if (!code) {
+    code = generateCode();
+    localStorage.setItem('deviceCode', code);
+  }
+  return code;
+}
+
+let deviceCode = getDeviceCode();
+
+// ===== 인메모리 캐시 =====
+let cachedData = {};
+let cachedGoalDates = {};
+
+// ===== 클라우드 동기화 =====
+async function loadFromCloud() {
+  try {
+    const ref = doc(db, 'users', deviceCode);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const d = snap.data();
+      cachedData = d.calendarData || {};
+      cachedGoalDates = d.goalDates || {};
+    } else {
+      // 처음 접속: 기존 localStorage 데이터 마이그레이션
+      const raw = localStorage.getItem('calendarData');
+      if (raw) cachedData = JSON.parse(raw);
+      const rawGoal = localStorage.getItem('goalDates');
+      if (rawGoal) cachedGoalDates = JSON.parse(rawGoal);
+      if (raw || rawGoal) await saveToCloud();
+    }
+  } catch (e) {
+    console.error('클라우드 로드 실패, 로컬 데이터 사용:', e);
+    const raw = localStorage.getItem('calendarData');
+    cachedData = raw ? JSON.parse(raw) : {};
+    const rawGoal = localStorage.getItem('goalDates');
+    cachedGoalDates = rawGoal ? JSON.parse(rawGoal) : {};
+  }
+}
+
+async function saveToCloud() {
+  try {
+    const ref = doc(db, 'users', deviceCode);
+    await setDoc(ref, {
+      calendarData: cachedData,
+      goalDates: cachedGoalDates,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('클라우드 저장 실패:', e);
+  }
+}
+
+// ===== 데이터 접근 (기존 인터페이스 유지) =====
 function loadData() {
-  const raw = localStorage.getItem('calendarData');
-  return raw ? JSON.parse(raw) : {};
+  return cachedData;
 }
 
 function saveData(data) {
-  localStorage.setItem('calendarData', JSON.stringify(data));
+  cachedData = data;
+  saveToCloud();
+}
+
+function loadGoalDates() {
+  return cachedGoalDates;
+}
+
+function saveGoalDates(dates) {
+  cachedGoalDates = dates;
+  saveToCloud();
+}
+
+// ===== 기기 코드 UI =====
+function renderDeviceCode() {
+  const el = document.getElementById('deviceCodeSection');
+  const display = deviceCode.slice(0, 4) + '-' + deviceCode.slice(4);
+
+  el.innerHTML = `
+    <div class="device-code-bar">
+      <span class="device-code-label">내 기기 코드</span>
+      <span class="device-code-value">${display}</span>
+      <button class="device-code-btn" id="copyCodeBtn">복사</button>
+      <button class="device-code-btn secondary" id="changeCodeBtn">다른 기기 코드 입력</button>
+    </div>
+  `;
+
+  document.getElementById('copyCodeBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(deviceCode).then(() => {
+      const btn = document.getElementById('copyCodeBtn');
+      btn.textContent = '복사됨!';
+      setTimeout(() => { btn.textContent = '복사'; }, 1500);
+    });
+  });
+
+  document.getElementById('changeCodeBtn').addEventListener('click', () => {
+    el.innerHTML = `
+      <div class="device-code-bar">
+        <span class="device-code-label">다른 기기 코드 입력</span>
+        <input type="text" id="codeInput" class="code-input" placeholder="XXXX-XXXX" maxlength="9">
+        <button class="device-code-btn" id="applyCodeBtn">적용</button>
+        <button class="device-code-btn secondary" id="cancelCodeBtn">취소</button>
+      </div>
+    `;
+
+    document.getElementById('codeInput').addEventListener('input', (e) => {
+      let val = e.target.value.replace(/[^A-Z0-9a-z]/gi, '').toUpperCase();
+      if (val.length > 4) val = val.slice(0, 4) + '-' + val.slice(4, 8);
+      e.target.value = val;
+    });
+
+    document.getElementById('applyCodeBtn').addEventListener('click', async () => {
+      const input = document.getElementById('codeInput').value.replace('-', '').toUpperCase();
+      if (input.length !== 8) {
+        alert('코드는 8자리여야 합니다 (예: ABCD-1234)');
+        return;
+      }
+      localStorage.setItem('deviceCode', input);
+      deviceCode = input;
+      await loadFromCloud();
+      renderDeviceCode();
+      renderCalendar();
+      renderProgress();
+    });
+
+    document.getElementById('cancelCodeBtn').addEventListener('click', renderDeviceCode);
+  });
 }
 
 // ===== 수강 합산 =====
@@ -104,15 +243,6 @@ function renderProgress() {
 }
 
 // ===== 완강 목표 계산기 =====
-function loadGoalDates() {
-  const raw = localStorage.getItem('goalDates');
-  return raw ? JSON.parse(raw) : {};
-}
-
-function saveGoalDates(dates) {
-  localStorage.setItem('goalDates', JSON.stringify(dates));
-}
-
 function renderGoalSection() {
   const container = document.getElementById('goalSection');
   const config = TAB_CONFIG[currentTab];
@@ -202,7 +332,7 @@ function renderGoalSection() {
 }
 
 // ===== D-Day =====
-const EXAM_DATE = new Date(YEAR, 9, 31); // 10월 31일
+const EXAM_DATE = new Date(YEAR, 9, 31);
 
 function renderDDay() {
   const today = new Date();
@@ -218,7 +348,6 @@ function renderCalendar() {
   title.textContent = `${YEAR}년 ${currentMonth + 1}월`;
   renderDDay();
 
-  // 네비게이션 버튼 활성/비활성
   document.getElementById('prevMonth').disabled = currentMonth <= MIN_MONTH;
   document.getElementById('nextMonth').disabled = currentMonth >= MAX_MONTH;
 
@@ -233,12 +362,10 @@ function renderCalendar() {
   const data = loadData();
   let html = '';
 
-  // 빈 셀
   for (let i = 0; i < firstDay; i++) {
     html += '<div class="day-cell empty"></div>';
   }
 
-  // 날짜 셀
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${YEAR}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const isToday = d === todayStr;
@@ -273,7 +400,6 @@ function renderCalendar() {
 
   daysContainer.innerHTML = html;
 
-  // 날짜 클릭 이벤트
   daysContainer.querySelectorAll('.day-cell:not(.empty)').forEach(cell => {
     cell.addEventListener('click', () => openModal(cell.dataset.date));
   });
@@ -395,7 +521,13 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
 
-// ===== 초기 렌더링 =====
-renderTabs();
-renderProgress();
-renderCalendar();
+// ===== 초기화 =====
+async function init() {
+  await loadFromCloud();
+  renderDeviceCode();
+  renderTabs();
+  renderProgress();
+  renderCalendar();
+}
+
+init();
