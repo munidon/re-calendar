@@ -1,0 +1,424 @@
+{
+  "examId": "agent-20181027-part1",
+  "year": 2018,
+  "round": 29,
+  "part": 1,
+  "questionCount": 80,
+  "pointPerQuestion": 2.5,
+  "source": "COMCBT 학생용 PDF 렌더 이미지 기반",
+  "answerSource": "마지막 페이지 우하단 정답표 이미지 수동 보정",
+  "subjects": [
+    {
+      "name": "부동산학개론",
+      "start": 1,
+      "end": 40
+    },
+    {
+      "name": "민법",
+      "start": 41,
+      "end": 80
+    }
+  ],
+  "questions": [
+    {
+      "number": 1,
+      "imagePath": "./assets/exams/agent-20181027-part1/q001.png",
+      "answer": 2
+    },
+    {
+      "number": 2,
+      "imagePath": "./assets/exams/agent-20181027-part1/q002.png",
+      "answer": 1
+    },
+    {
+      "number": 3,
+      "imagePath": "./assets/exams/agent-20181027-part1/q003.png",
+      "answer": 5
+    },
+    {
+      "number": 4,
+      "imagePath": "./assets/exams/agent-20181027-part1/q004.png",
+      "answer": 1
+    },
+    {
+      "number": 5,
+      "imagePath": "./assets/exams/agent-20181027-part1/q005.png",
+      "answer": 1
+    },
+    {
+      "number": 6,
+      "imagePath": "./assets/exams/agent-20181027-part1/q006.png",
+      "answer": 2
+    },
+    {
+      "number": 7,
+      "imagePath": "./assets/exams/agent-20181027-part1/q007.png",
+      "answer": 1
+    },
+    {
+      "number": 8,
+      "imagePath": "./assets/exams/agent-20181027-part1/q008.png",
+      "answer": 1
+    },
+    {
+      "number": 9,
+      "imagePath": "./assets/exams/agent-20181027-part1/q009.png",
+      "answer": 4
+    },
+    {
+      "number": 10,
+      "imagePath": "./assets/exams/agent-20181027-part1/q010.png",
+      "answer": 4
+    },
+    {
+      "number": 11,
+      "imagePath": "./assets/exams/agent-20181027-part1/q011.png",
+      "answer": 3
+    },
+    {
+      "number": 12,
+      "imagePath": "./assets/exams/agent-20181027-part1/q012.png",
+      "answer": 2
+    },
+    {
+      "number": 13,
+      "imagePath": "./assets/exams/agent-20181027-part1/q013.png",
+      "answer": 2
+    },
+    {
+      "number": 14,
+      "imagePath": "./assets/exams/agent-20181027-part1/q014.png",
+      "answer": 5
+    },
+    {
+      "number": 15,
+      "imagePath": "./assets/exams/agent-20181027-part1/q015.png",
+      "answer": 1
+    },
+    {
+      "number": 16,
+      "imagePath": "./assets/exams/agent-20181027-part1/q016.png",
+      "answer": 4
+    },
+    {
+      "number": 17,
+      "imagePath": "./assets/exams/agent-20181027-part1/q017.png",
+      "answer": 3
+    },
+    {
+      "number": 18,
+      "imagePath": "./assets/exams/agent-20181027-part1/q018.png",
+      "answer": 2
+    },
+    {
+      "number": 19,
+      "imagePath": "./assets/exams/agent-20181027-part1/q019.png",
+      "answer": 5
+    },
+    {
+      "number": 20,
+      "imagePath": "./assets/exams/agent-20181027-part1/q020.png",
+      "answer": 3
+    },
+    {
+      "number": 21,
+      "imagePath": "./assets/exams/agent-20181027-part1/q021.png",
+      "answer": 4
+    },
+    {
+      "number": 22,
+      "imagePath": "./assets/exams/agent-20181027-part1/q022.png",
+      "answer": 5
+    },
+    {
+      "number": 23,
+      "imagePath": "./assets/exams/agent-20181027-part1/q023.png",
+      "answer": 3
+    },
+    {
+      "number": 24,
+      "imagePath": "./assets/exams/agent-20181027-part1/q024.png",
+      "answer": 3
+    },
+    {
+      "number": 25,
+      "imagePath": "./assets/exams/agent-20181027-part1/q025.png",
+      "answer": 2
+    },
+    {
+      "number": 26,
+      "imagePath": "./assets/exams/agent-20181027-part1/q026.png",
+      "answer": 5
+    },
+    {
+      "number": 27,
+      "imagePath": "./assets/exams/agent-20181027-part1/q027.png",
+      "answer": 5
+    },
+    {
+      "number": 28,
+      "imagePath": "./assets/exams/agent-20181027-part1/q028.png",
+      "answer": 1
+    },
+    {
+      "number": 29,
+      "imagePath": "./assets/exams/agent-20181027-part1/q029.png",
+      "answer": 2
+    },
+    {
+      "number": 30,
+      "imagePath": "./assets/exams/agent-20181027-part1/q030.png",
+      "answer": 2
+    },
+    {
+      "number": 31,
+      "imagePath": "./assets/exams/agent-20181027-part1/q031.png",
+      "answer": 5
+    },
+    {
+      "number": 32,
+      "imagePath": "./assets/exams/agent-20181027-part1/q032.png",
+      "answer": 4
+    },
+    {
+      "number": 33,
+      "imagePath": "./assets/exams/agent-20181027-part1/q033.png",
+      "answer": 3
+    },
+    {
+      "number": 34,
+      "imagePath": "./assets/exams/agent-20181027-part1/q034.png",
+      "answer": 2
+    },
+    {
+      "number": 35,
+      "imagePath": "./assets/exams/agent-20181027-part1/q035.png",
+      "answer": 5
+    },
+    {
+      "number": 36,
+      "imagePath": "./assets/exams/agent-20181027-part1/q036.png",
+      "answer": 4
+    },
+    {
+      "number": 37,
+      "imagePath": "./assets/exams/agent-20181027-part1/q037.png",
+      "answer": 1
+    },
+    {
+      "number": 38,
+      "imagePath": "./assets/exams/agent-20181027-part1/q038.png",
+      "answer": 4
+    },
+    {
+      "number": 39,
+      "imagePath": "./assets/exams/agent-20181027-part1/q039.png",
+      "answer": 4
+    },
+    {
+      "number": 40,
+      "imagePath": "./assets/exams/agent-20181027-part1/q040.png",
+      "answer": 4
+    },
+    {
+      "number": 41,
+      "imagePath": "./assets/exams/agent-20181027-part1/q041.png",
+      "answer": 4
+    },
+    {
+      "number": 42,
+      "imagePath": "./assets/exams/agent-20181027-part1/q042.png",
+      "answer": 5
+    },
+    {
+      "number": 43,
+      "imagePath": "./assets/exams/agent-20181027-part1/q043.png",
+      "answer": 5
+    },
+    {
+      "number": 44,
+      "imagePath": "./assets/exams/agent-20181027-part1/q044.png",
+      "answer": 3
+    },
+    {
+      "number": 45,
+      "imagePath": "./assets/exams/agent-20181027-part1/q045.png",
+      "answer": 5
+    },
+    {
+      "number": 46,
+      "imagePath": "./assets/exams/agent-20181027-part1/q046.png",
+      "answer": 2
+    },
+    {
+      "number": 47,
+      "imagePath": "./assets/exams/agent-20181027-part1/q047.png",
+      "answer": 2
+    },
+    {
+      "number": 48,
+      "imagePath": "./assets/exams/agent-20181027-part1/q048.png",
+      "answer": 3
+    },
+    {
+      "number": 49,
+      "imagePath": "./assets/exams/agent-20181027-part1/q049.png",
+      "answer": 5
+    },
+    {
+      "number": 50,
+      "imagePath": "./assets/exams/agent-20181027-part1/q050.png",
+      "answer": 4
+    },
+    {
+      "number": 51,
+      "imagePath": "./assets/exams/agent-20181027-part1/q051.png",
+      "answer": 4
+    },
+    {
+      "number": 52,
+      "imagePath": "./assets/exams/agent-20181027-part1/q052.png",
+      "answer": 1
+    },
+    {
+      "number": 53,
+      "imagePath": "./assets/exams/agent-20181027-part1/q053.png",
+      "answer": 3
+    },
+    {
+      "number": 54,
+      "imagePath": "./assets/exams/agent-20181027-part1/q054.png",
+      "answer": 1
+    },
+    {
+      "number": 55,
+      "imagePath": "./assets/exams/agent-20181027-part1/q055.png",
+      "answer": 1
+    },
+    {
+      "number": 56,
+      "imagePath": "./assets/exams/agent-20181027-part1/q056.png",
+      "answer": 4
+    },
+    {
+      "number": 57,
+      "imagePath": "./assets/exams/agent-20181027-part1/q057.png",
+      "answer": 1
+    },
+    {
+      "number": 58,
+      "imagePath": "./assets/exams/agent-20181027-part1/q058.png",
+      "answer": 2
+    },
+    {
+      "number": 59,
+      "imagePath": "./assets/exams/agent-20181027-part1/q059.png",
+      "answer": 4
+    },
+    {
+      "number": 60,
+      "imagePath": "./assets/exams/agent-20181027-part1/q060.png",
+      "answer": 3
+    },
+    {
+      "number": 61,
+      "imagePath": "./assets/exams/agent-20181027-part1/q061.png",
+      "answer": 3
+    },
+    {
+      "number": 62,
+      "imagePath": "./assets/exams/agent-20181027-part1/q062.png",
+      "answer": 4
+    },
+    {
+      "number": 63,
+      "imagePath": "./assets/exams/agent-20181027-part1/q063.png",
+      "answer": 2
+    },
+    {
+      "number": 64,
+      "imagePath": "./assets/exams/agent-20181027-part1/q064.png",
+      "answer": 3
+    },
+    {
+      "number": 65,
+      "imagePath": "./assets/exams/agent-20181027-part1/q065.png",
+      "answer": 5
+    },
+    {
+      "number": 66,
+      "imagePath": "./assets/exams/agent-20181027-part1/q066.png",
+      "answer": 2
+    },
+    {
+      "number": 67,
+      "imagePath": "./assets/exams/agent-20181027-part1/q067.png",
+      "answer": 3
+    },
+    {
+      "number": 68,
+      "imagePath": "./assets/exams/agent-20181027-part1/q068.png",
+      "answer": 1
+    },
+    {
+      "number": 69,
+      "imagePath": "./assets/exams/agent-20181027-part1/q069.png",
+      "answer": 4
+    },
+    {
+      "number": 70,
+      "imagePath": "./assets/exams/agent-20181027-part1/q070.png",
+      "answer": 5
+    },
+    {
+      "number": 71,
+      "imagePath": "./assets/exams/agent-20181027-part1/q071.png",
+      "answer": 2
+    },
+    {
+      "number": 72,
+      "imagePath": "./assets/exams/agent-20181027-part1/q072.png",
+      "answer": 5
+    },
+    {
+      "number": 73,
+      "imagePath": "./assets/exams/agent-20181027-part1/q073.png",
+      "answer": 4
+    },
+    {
+      "number": 74,
+      "imagePath": "./assets/exams/agent-20181027-part1/q074.png",
+      "answer": 2
+    },
+    {
+      "number": 75,
+      "imagePath": "./assets/exams/agent-20181027-part1/q075.png",
+      "answer": 3
+    },
+    {
+      "number": 76,
+      "imagePath": "./assets/exams/agent-20181027-part1/q076.png",
+      "answer": 1
+    },
+    {
+      "number": 77,
+      "imagePath": "./assets/exams/agent-20181027-part1/q077.png",
+      "answer": 2
+    },
+    {
+      "number": 78,
+      "imagePath": "./assets/exams/agent-20181027-part1/q078.png",
+      "answer": 1
+    },
+    {
+      "number": 79,
+      "imagePath": "./assets/exams/agent-20181027-part1/q079.png",
+      "answer": 5
+    },
+    {
+      "number": 80,
+      "imagePath": "./assets/exams/agent-20181027-part1/q080.png",
+      "answer": 1
+    }
+  ]
+}

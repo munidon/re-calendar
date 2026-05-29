@@ -1,0 +1,364 @@
+{
+  "exams": [
+    {
+      "examId": "agent-20241026-part1",
+      "year": 2024,
+      "round": 35,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20241026-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20231028-part1",
+      "year": 2023,
+      "round": 34,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20231028-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20221029-part1",
+      "year": 2022,
+      "round": 33,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20221029-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20211030-part1",
+      "year": 2021,
+      "round": 32,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20211030-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20201031-part1",
+      "year": 2020,
+      "round": 31,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20201031-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20191026-part1",
+      "year": 2019,
+      "round": 30,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20191026-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20181027-part1",
+      "year": 2018,
+      "round": 29,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20181027-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20171028-part1",
+      "year": 2017,
+      "round": 28,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20171028-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20161029-part1",
+      "year": 2016,
+      "round": 27,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20161029-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20151024-part1",
+      "year": 2015,
+      "round": 26,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20151024-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20141026-part1",
+      "year": 2014,
+      "round": 25,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20141026-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20131027-part1",
+      "year": 2013,
+      "round": 24,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20131027-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20121028-part1",
+      "year": 2012,
+      "round": 23,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20121028-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20111123-part1",
+      "year": 2011,
+      "round": 22,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20111123-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20101024-part1",
+      "year": 2010,
+      "round": 21,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20101024-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20081026-part1",
+      "year": 2008,
+      "round": 19,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20081026-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20071028-part1",
+      "year": 2007,
+      "round": 18,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20071028-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20061029-part1",
+      "year": 2006,
+      "round": 17,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20061029-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20050522-part1",
+      "year": 2005,
+      "round": 15,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20050522-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20051030-part1",
+      "year": 2005,
+      "round": 16,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20051030-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20241026-part2",
+      "year": 2024,
+      "round": 35,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20241026-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20231028-part2",
+      "year": 2023,
+      "round": 34,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20231028-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20221029-part2",
+      "year": 2022,
+      "round": 33,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20221029-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20211030-part2",
+      "year": 2021,
+      "round": 32,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20211030-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20201031-part2",
+      "year": 2020,
+      "round": 31,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20201031-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20191026-part2",
+      "year": 2019,
+      "round": 30,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20191026-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20181027-part2",
+      "year": 2018,
+      "round": 29,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20181027-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20171028-part2",
+      "year": 2017,
+      "round": 28,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20171028-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20161029-part2",
+      "year": 2016,
+      "round": 27,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20161029-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20151024-part2",
+      "year": 2015,
+      "round": 26,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20151024-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20141026-part2",
+      "year": 2014,
+      "round": 25,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20141026-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20131027-part2",
+      "year": 2013,
+      "round": 24,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20131027-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20121028-part2",
+      "year": 2012,
+      "round": 23,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20121028-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20111123-part2",
+      "year": 2011,
+      "round": 22,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20111123-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20101024-part2",
+      "year": 2010,
+      "round": 21,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20101024-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20081026-part2",
+      "year": 2008,
+      "round": 19,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20081026-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20071028-part2",
+      "year": 2007,
+      "round": 18,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20071028-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20061029-part2",
+      "year": 2006,
+      "round": 17,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20061029-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20050522-part2",
+      "year": 2005,
+      "round": 15,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20050522-part2/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20051030-part2",
+      "year": 2005,
+      "round": 16,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20051030-part2/exam.json",
+      "status": "available"
+    }
+  ]
+}

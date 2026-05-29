@@ -27,6 +27,7 @@ const TAB_CONFIG = {
 const MIN_MONTH = 2;
 const MAX_MONTH = 9;
 const YEAR = 2026;
+const EXAM_INDEX_PATH = './assets/exams/exam-index.json';
 
 // ===== 상태 =====
 let currentTab = '기본이론';
@@ -56,6 +57,23 @@ let deviceCode = getDeviceCode();
 // ===== 인메모리 캐시 =====
 let cachedData = {};
 let cachedGoalDates = {};
+let cachedExamResults = [];
+
+// ===== 기출문제 풀이 상태 =====
+let examIndex = [];
+let selectedExamPart = 1;
+let selectedExamId = null;
+let currentExam = null;
+let currentAttempt = null;
+let examTimerId = null;
+let suppressReviewExpansionAnimation = false;
+let selectedExamHistoryId = null;
+let selectedExamHistoryQuestion = null;
+let suppressHistoryExpansionAnimation = false;
+
+function getExamResultsStorageKey() {
+  return `examResults:${deviceCode}`;
+}
 
 // ===== 클라우드 동기화 =====
 async function loadFromCloud() {
@@ -66,13 +84,18 @@ async function loadFromCloud() {
       const d = snap.data();
       cachedData = d.calendarData || {};
       cachedGoalDates = d.goalDates || {};
+      const rawExamResults = localStorage.getItem(getExamResultsStorageKey()) || localStorage.getItem('examResults');
+      cachedExamResults = d.examResults || (rawExamResults ? JSON.parse(rawExamResults) : []);
+      if (!d.examResults && rawExamResults) await saveToCloud();
     } else {
       // 처음 접속: 기존 localStorage 데이터 마이그레이션
       const raw = localStorage.getItem('calendarData');
       if (raw) cachedData = JSON.parse(raw);
       const rawGoal = localStorage.getItem('goalDates');
       if (rawGoal) cachedGoalDates = JSON.parse(rawGoal);
-      if (raw || rawGoal) await saveToCloud();
+      const rawExamResults = localStorage.getItem(getExamResultsStorageKey()) || localStorage.getItem('examResults');
+      if (rawExamResults) cachedExamResults = JSON.parse(rawExamResults);
+      if (raw || rawGoal || rawExamResults) await saveToCloud();
     }
   } catch (e) {
     console.error('클라우드 로드 실패, 로컬 데이터 사용:', e);
@@ -80,6 +103,8 @@ async function loadFromCloud() {
     cachedData = raw ? JSON.parse(raw) : {};
     const rawGoal = localStorage.getItem('goalDates');
     cachedGoalDates = rawGoal ? JSON.parse(rawGoal) : {};
+    const rawExamResults = localStorage.getItem(getExamResultsStorageKey()) || localStorage.getItem('examResults');
+    cachedExamResults = rawExamResults ? JSON.parse(rawExamResults) : [];
   }
 }
 
@@ -89,6 +114,7 @@ async function saveToCloud() {
     await setDoc(ref, {
       calendarData: cachedData,
       goalDates: cachedGoalDates,
+      examResults: cachedExamResults,
       updatedAt: new Date().toISOString()
     });
   } catch (e) {
@@ -112,6 +138,16 @@ function loadGoalDates() {
 
 function saveGoalDates(dates) {
   cachedGoalDates = dates;
+  saveToCloud();
+}
+
+function loadExamResults() {
+  return cachedExamResults;
+}
+
+function saveExamResults(results) {
+  cachedExamResults = results;
+  localStorage.setItem(getExamResultsStorageKey(), JSON.stringify(cachedExamResults));
   saveToCloud();
 }
 
@@ -165,6 +201,7 @@ function renderDeviceCode() {
       renderDeviceCode();
       renderCalendar();
       renderProgress();
+      renderExamHistory();
     });
 
     document.getElementById('cancelCodeBtn').addEventListener('click', renderDeviceCode);
@@ -322,6 +359,624 @@ function renderGoalSection() {
     saveGoalDates(dates);
     renderGoalSection();
   });
+}
+
+// ===== 기출문제 풀이 =====
+function getExamAttemptKey(examId) {
+  return `examAttempt:${examId}`;
+}
+
+function createExamAttempt(exam) {
+  return {
+    examId: exam.examId,
+    answers: {},
+    currentQuestion: 1,
+    elapsedMs: 0,
+    isRunning: true,
+    runningSince: Date.now(),
+    submittedAt: null,
+    result: null,
+    reviewQuestion: null
+  };
+}
+
+function loadExamAttempt(examId) {
+  const raw = localStorage.getItem(getExamAttemptKey(examId));
+  if (!raw) return null;
+  try {
+    const attempt = JSON.parse(raw);
+    if (attempt.isRunning && attempt.runningSince) {
+      attempt.elapsedMs += Date.now() - attempt.runningSince;
+      attempt.runningSince = Date.now();
+      saveExamAttempt(attempt);
+    }
+    return attempt;
+  } catch (e) {
+    console.error('기출문제 풀이 상태 로드 실패:', e);
+    return null;
+  }
+}
+
+function saveExamAttempt(attempt = currentAttempt) {
+  if (!attempt?.examId) return;
+  localStorage.setItem(getExamAttemptKey(attempt.examId), JSON.stringify(attempt));
+}
+
+function getElapsedMs(attempt = currentAttempt) {
+  if (!attempt) return 0;
+  const runningDelta = attempt.isRunning && attempt.runningSince
+    ? Date.now() - attempt.runningSince
+    : 0;
+  return attempt.elapsedMs + runningDelta;
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map(n => String(n).padStart(2, '0')).join(':');
+}
+
+async function loadExamIndex() {
+  try {
+    const res = await fetch(EXAM_INDEX_PATH, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    examIndex = data.exams || [];
+    selectedExamId = examIndex.find(exam => exam.part === selectedExamPart)?.examId || null;
+  } catch (e) {
+    console.error('기출문제 목록 로드 실패:', e);
+    examIndex = [];
+  }
+}
+
+async function loadExam(examId) {
+  const meta = examIndex.find(exam => exam.examId === examId);
+  if (!meta) return null;
+  const res = await fetch(meta.dataPath, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`기출문제 데이터 로드 실패: HTTP ${res.status}`);
+  return res.json();
+}
+
+function getAvailableExamsForPart(part) {
+  return examIndex
+    .filter(exam => exam.part === part && exam.status === 'available')
+    .sort((a, b) => b.year - a.year || b.round - a.round);
+}
+
+function renderExamPractice() {
+  const container = document.getElementById('examPractice');
+  if (!container) return;
+
+  const availableExams = getAvailableExamsForPart(selectedExamPart);
+  const examOptions = availableExams.map(exam => `
+    <option value="${exam.examId}" ${exam.examId === selectedExamId ? 'selected' : ''}>
+      ${exam.year}년 ${exam.round}회 (${exam.questionCount}문항)
+    </option>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="exam-picker">
+      <div class="exam-field">
+        <label for="examPartSelect">시험 구분</label>
+        <select id="examPartSelect">
+          <option value="1" ${selectedExamPart === 1 ? 'selected' : ''}>1차</option>
+          <option value="2" ${selectedExamPart === 2 ? 'selected' : ''}>2차</option>
+        </select>
+      </div>
+      <div class="exam-field">
+        <label for="examRoundSelect">연도/회차</label>
+        <select id="examRoundSelect" ${availableExams.length ? '' : 'disabled'}>
+          ${examOptions || '<option>준비 중</option>'}
+        </select>
+      </div>
+      <button class="btn btn-confirm" id="examStartBtn" ${selectedExamId ? '' : 'disabled'}>시험 시작</button>
+    </div>
+    <div class="exam-workspace" id="examWorkspace"></div>
+  `;
+
+  document.getElementById('examPartSelect').addEventListener('change', (e) => {
+    selectedExamPart = parseInt(e.target.value);
+    selectedExamId = getAvailableExamsForPart(selectedExamPart)[0]?.examId || null;
+    currentExam = null;
+    currentAttempt = null;
+    stopExamTicker();
+    renderExamPractice();
+    renderExamWorkspace();
+  });
+
+  document.getElementById('examRoundSelect').addEventListener('change', (e) => {
+    selectedExamId = e.target.value;
+    currentExam = null;
+    currentAttempt = null;
+    stopExamTicker();
+    renderExamWorkspace();
+  });
+
+  document.getElementById('examStartBtn').addEventListener('click', startSelectedExam);
+  renderExamWorkspace();
+}
+
+async function startSelectedExam() {
+  if (!selectedExamId) return;
+  try {
+    currentExam = await loadExam(selectedExamId);
+    currentAttempt = loadExamAttempt(selectedExamId) || createExamAttempt(currentExam);
+    if (!currentAttempt.submittedAt) {
+      startStopwatch();
+    }
+    saveExamAttempt();
+    renderExamWorkspace();
+  } catch (e) {
+    console.error(e);
+    alert('기출문제 데이터를 불러오지 못했습니다. 로컬 서버에서 실행 중인지 확인해 주세요.');
+  }
+}
+
+function renderExamWorkspace() {
+  const workspace = document.getElementById('examWorkspace');
+  if (!workspace) return;
+
+  if (!examIndex.length) {
+    workspace.innerHTML = '<div class="exam-empty">기출문제 목록을 불러오지 못했습니다.</div>';
+    return;
+  }
+
+  if (!selectedExamId) {
+    workspace.innerHTML = '<div class="exam-empty">현재 MVP는 2024년 1차 시험부터 지원합니다.</div>';
+    return;
+  }
+
+  if (!currentExam || !currentAttempt) {
+    workspace.innerHTML = '<div class="exam-empty">시험 시작을 누르면 풀이 시간이 자동으로 측정됩니다.</div>';
+    return;
+  }
+
+  if (currentAttempt.result) {
+    renderExamResult(workspace);
+    return;
+  }
+
+  renderExamSolver(workspace);
+}
+
+function renderExamSolver(workspace) {
+  const question = currentExam.questions[currentAttempt.currentQuestion - 1];
+  const selectedAnswer = currentAttempt.answers[question.number];
+  const unanswered = currentExam.questions.filter(q => !currentAttempt.answers[q.number]).length;
+  const elapsed = formatDuration(getElapsedMs());
+
+  workspace.innerHTML = `
+    <div class="exam-toolbar">
+      <div>
+        <div class="exam-title">${currentExam.year}년 ${currentExam.round}회 ${currentExam.part}차</div>
+        <div class="exam-subtitle">${question.number} / ${currentExam.questionCount}번 · 미응답 ${unanswered}문항</div>
+      </div>
+      <div class="exam-timer" id="examTimer">${elapsed}</div>
+      <div class="exam-actions">
+        <button class="exam-small-btn" id="examPauseBtn">${currentAttempt.isRunning ? '일시정지' : '재개'}</button>
+        <button class="exam-small-btn" id="examResetBtn">초기화</button>
+      </div>
+    </div>
+    <div class="question-layout">
+      <div class="question-card">
+        <img class="question-image" src="${question.imagePath}" alt="${question.number}번 문제">
+      </div>
+      <div class="answer-panel">
+        <div class="answer-label">답안 선택</div>
+        <div class="answer-buttons">
+          ${[1, 2, 3, 4, 5].map(value => `
+            <button class="answer-btn ${selectedAnswer === value ? 'selected' : ''}" data-answer="${value}">
+              ${value}
+            </button>
+          `).join('')}
+        </div>
+        <div class="question-nav">
+          <button class="btn btn-cancel" id="prevQuestionBtn" ${question.number <= 1 ? 'disabled' : ''}>이전</button>
+          <button class="btn btn-cancel" id="nextQuestionBtn" ${question.number >= currentExam.questionCount ? 'disabled' : ''}>다음</button>
+        </div>
+        <button class="btn btn-confirm submit-exam-btn" id="submitExamBtn">제출 및 채점</button>
+      </div>
+    </div>
+    <div class="question-map">
+      ${currentExam.questions.map(q => {
+        const status = currentAttempt.answers[q.number] ? 'answered' : 'unanswered';
+        const current = q.number === question.number ? 'current' : '';
+        return `<button class="question-dot ${status} ${current}" data-question="${q.number}">${q.number}</button>`;
+      }).join('')}
+    </div>
+  `;
+
+  workspace.querySelectorAll('.answer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentAttempt.answers[question.number] = parseInt(btn.dataset.answer);
+      saveExamAttempt();
+      renderExamWorkspace();
+    });
+  });
+
+  workspace.querySelectorAll('.question-dot').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentAttempt.currentQuestion = parseInt(btn.dataset.question);
+      saveExamAttempt();
+      renderExamWorkspace();
+    });
+  });
+
+  document.getElementById('prevQuestionBtn').addEventListener('click', () => moveQuestion(-1));
+  document.getElementById('nextQuestionBtn').addEventListener('click', () => moveQuestion(1));
+  document.getElementById('examPauseBtn').addEventListener('click', toggleStopwatch);
+  document.getElementById('examResetBtn').addEventListener('click', resetExamAttempt);
+  document.getElementById('submitExamBtn').addEventListener('click', submitExam);
+}
+
+function moveQuestion(delta) {
+  currentAttempt.currentQuestion = Math.min(
+    currentExam.questionCount,
+    Math.max(1, currentAttempt.currentQuestion + delta)
+  );
+  saveExamAttempt();
+  renderExamWorkspace();
+}
+
+function startStopwatch() {
+  if (!currentAttempt || currentAttempt.submittedAt) return;
+  if (!currentAttempt.isRunning) {
+    currentAttempt.isRunning = true;
+    currentAttempt.runningSince = Date.now();
+  }
+  saveExamAttempt();
+  startExamTicker();
+}
+
+function pauseStopwatch() {
+  if (!currentAttempt?.isRunning) return;
+  currentAttempt.elapsedMs = getElapsedMs();
+  currentAttempt.isRunning = false;
+  currentAttempt.runningSince = null;
+  saveExamAttempt();
+  stopExamTicker();
+}
+
+function toggleStopwatch() {
+  if (currentAttempt.isRunning) {
+    pauseStopwatch();
+  } else {
+    startStopwatch();
+  }
+  renderExamWorkspace();
+}
+
+function startExamTicker() {
+  stopExamTicker();
+  examTimerId = setInterval(() => {
+    const timer = document.getElementById('examTimer');
+    if (timer) timer.textContent = formatDuration(getElapsedMs());
+    if (currentAttempt) saveExamAttempt();
+  }, 1000);
+}
+
+function stopExamTicker() {
+  if (examTimerId) {
+    clearInterval(examTimerId);
+    examTimerId = null;
+  }
+}
+
+function resetExamAttempt() {
+  if (!currentExam) return;
+  if (!confirm('현재 풀이 기록을 초기화할까요?')) return;
+  currentAttempt = createExamAttempt(currentExam);
+  saveExamAttempt();
+  startStopwatch();
+  renderExamWorkspace();
+}
+
+function submitExam() {
+  const unanswered = currentExam.questions.filter(q => !currentAttempt.answers[q.number]).length;
+  if (unanswered > 0 && !confirm(`미응답 ${unanswered}문항이 있습니다. 그대로 제출할까요?`)) return;
+
+  currentAttempt.elapsedMs = getElapsedMs();
+  currentAttempt.isRunning = false;
+  currentAttempt.runningSince = null;
+  currentAttempt.submittedAt = new Date().toISOString();
+  currentAttempt.result = gradeExam(currentExam, currentAttempt);
+  recordExamResult(currentExam, currentAttempt);
+  saveExamAttempt();
+  stopExamTicker();
+  renderExamWorkspace();
+  renderExamHistory();
+}
+
+function gradeExam(exam, attempt) {
+  const point = exam.pointPerQuestion || 2.5;
+  const questionResults = exam.questions.map(question => {
+    const selected = attempt.answers[question.number] || null;
+    return {
+      number: question.number,
+      selected,
+      answer: question.answer,
+      correct: selected === question.answer
+    };
+  });
+
+  const subjectResults = exam.subjects.map(subject => {
+    const items = questionResults.filter(item => item.number >= subject.start && item.number <= subject.end);
+    const correctCount = items.filter(item => item.correct).length;
+    const totalCount = items.length;
+    const score = correctCount * point;
+    return {
+      ...subject,
+      correctCount,
+      totalCount,
+      score,
+      failedBySubject: score < 40
+    };
+  });
+
+  const averageScore = subjectResults.reduce((sum, subject) => sum + subject.score, 0) / subjectResults.length;
+  const hasSubjectFail = subjectResults.some(subject => subject.failedBySubject);
+
+  return {
+    passed: !hasSubjectFail && averageScore >= 60,
+    averageScore,
+    hasSubjectFail,
+    elapsedMs: attempt.elapsedMs,
+    subjects: subjectResults,
+    questions: questionResults
+  };
+}
+
+function createExamResultRecord(exam, attempt) {
+  const submittedAt = attempt.submittedAt || new Date().toISOString();
+  return {
+    id: `${exam.examId}:${submittedAt}`,
+    deviceCode,
+    examId: exam.examId,
+    year: exam.year,
+    round: exam.round,
+    part: exam.part,
+    questionCount: exam.questionCount,
+    submittedAt,
+    elapsedMs: attempt.elapsedMs,
+    answers: { ...attempt.answers },
+    result: attempt.result
+  };
+}
+
+function recordExamResult(exam, attempt) {
+  const record = createExamResultRecord(exam, attempt);
+  const results = loadExamResults().filter(item => item.id !== record.id);
+  results.unshift(record);
+  saveExamResults(results);
+  selectedExamHistoryId = record.id;
+}
+
+function renderExamResult(workspace) {
+  const result = currentAttempt.result;
+  const wrongCount = result.questions.filter(q => !q.correct).length;
+  const selectedReviewNumber = currentAttempt.reviewQuestion;
+  const selectedReviewItem = result.questions.find(item => item.number === selectedReviewNumber);
+  const selectedReviewQuestion = currentExam.questions.find(question => question.number === selectedReviewNumber);
+  const selectedReviewRow = selectedReviewNumber ? Math.floor((selectedReviewNumber - 1) / 10) : null;
+  const reviewRows = [];
+  for (let i = 0; i < result.questions.length; i += 10) {
+    reviewRows.push(result.questions.slice(i, i + 10));
+  }
+
+  workspace.innerHTML = `
+    <div class="result-summary ${result.passed ? 'pass' : 'fail'}">
+      <div>
+        <div class="result-status">${result.passed ? '합격' : '불합격'}</div>
+        <div class="result-meta">전 과목 평균 ${result.averageScore.toFixed(1)}점 · 총 풀이 시간 ${formatDuration(result.elapsedMs)}</div>
+      </div>
+      <button class="btn btn-cancel" id="reviewResetBtn">다시 풀기</button>
+    </div>
+    <div class="result-subjects">
+      ${result.subjects.map(subject => `
+        <div class="result-subject ${subject.failedBySubject ? 'subject-fail' : ''}">
+          <div class="result-subject-name">${subject.name}</div>
+          <div class="result-subject-score">${subject.score.toFixed(1)}점</div>
+          <div class="result-subject-detail">
+            ${subject.correctCount} / ${subject.totalCount}문항 정답
+            ${subject.failedBySubject ? '<span class="fail-badge">과락</span>' : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="question-review">
+      <div class="review-header">문제별 정오답 · 오답/미응답 ${wrongCount}문항</div>
+      <div class="review-list">
+        ${reviewRows.map((row, rowIndex) => `
+          <div class="review-grid">
+            ${row.map(item => `
+              <button class="review-dot ${item.correct ? 'correct' : 'wrong'} ${item.number === selectedReviewNumber ? 'selected' : ''}" data-question="${item.number}">
+                <span>${item.number}</span>
+                <small>${item.selected || '-'} / ${item.answer}</small>
+              </button>
+            `).join('')}
+          </div>
+          ${rowIndex === selectedReviewRow && selectedReviewItem && selectedReviewQuestion ? `
+            <div class="review-expanded ${suppressReviewExpansionAnimation ? 'no-animation' : ''}" data-review-expanded-row="${rowIndex}">
+              <div class="review-expanded-head">
+                <div>
+                  <div class="review-expanded-title">${selectedReviewNumber}번 문제</div>
+                  <div class="review-expanded-meta">
+                    선택 ${selectedReviewItem.selected || '-'} · 정답 ${selectedReviewItem.answer}
+                  </div>
+                </div>
+                <span class="review-result-badge ${selectedReviewItem.correct ? 'correct' : 'wrong'}">
+                  ${selectedReviewItem.correct ? '정답' : '오답'}
+                </span>
+              </div>
+              <div class="review-question-card">
+                <img class="review-question-image" src="${selectedReviewQuestion.imagePath}" alt="${selectedReviewNumber}번 문제">
+              </div>
+            </div>
+          ` : ''}
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  suppressReviewExpansionAnimation = false;
+
+  document.getElementById('reviewResetBtn').addEventListener('click', resetExamAttempt);
+  workspace.querySelectorAll('.review-dot').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nextQuestion = parseInt(btn.dataset.question);
+      const previousQuestion = currentAttempt.reviewQuestion;
+      const previousRow = previousQuestion ? Math.floor((previousQuestion - 1) / 10) : null;
+      const nextRow = Math.floor((nextQuestion - 1) / 10);
+      suppressReviewExpansionAnimation = previousRow === nextRow;
+      currentAttempt.reviewQuestion = nextQuestion;
+      saveExamAttempt();
+      renderExamWorkspace();
+    });
+  });
+}
+
+function formatSubmittedAt(isoString) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString || '-';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
+}
+
+function getHistoryQuestionImagePath(record, questionNumber) {
+  return `./assets/exams/${record.examId}/q${String(questionNumber).padStart(3, '0')}.png`;
+}
+
+function renderExamHistory() {
+  const container = document.getElementById('examHistory');
+  if (!container) return;
+
+  const results = loadExamResults()
+    .slice()
+    .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+  if (!results.length) {
+    container.innerHTML = '<div class="exam-empty">아직 저장된 기출문제 풀이 결과가 없습니다.</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="history-device-note">기기 코드 ${deviceCode.slice(0, 4)}-${deviceCode.slice(4)} 기준으로 저장된 결과입니다.</div>
+    <div class="history-list">
+      ${results.map(record => {
+        const result = record.result;
+        const isOpen = record.id === selectedExamHistoryId;
+        const wrongCount = result.questions.filter(item => !item.correct).length;
+        const selectedNumber = isOpen && selectedExamHistoryQuestion?.recordId === record.id
+          ? selectedExamHistoryQuestion.questionNumber
+          : null;
+        const selectedItem = selectedNumber
+          ? result.questions.find(item => item.number === selectedNumber && !item.correct)
+          : null;
+        const selectedRow = selectedItem ? Math.floor((selectedItem.number - 1) / 10) : null;
+        const historyRows = [];
+        for (let i = 0; i < result.questions.length; i += 10) {
+          historyRows.push(result.questions.slice(i, i + 10));
+        }
+        return `
+          <div class="history-item ${isOpen ? 'open' : ''}">
+            <button class="history-summary" data-history-id="${record.id}">
+              <div>
+                <div class="history-title">${record.year}년 ${record.round}회 ${record.part}차</div>
+                <div class="history-meta">${formatSubmittedAt(record.submittedAt)} · ${formatDuration(record.elapsedMs)}</div>
+              </div>
+              <div class="history-score">
+                <span class="history-pass ${result.passed ? 'pass' : 'fail'}">${result.passed ? '합격' : '불합격'}</span>
+                <strong>${result.averageScore.toFixed(1)}점</strong>
+              </div>
+            </button>
+            ${isOpen ? `
+              <div class="history-detail">
+                <div class="history-subjects">
+                  ${result.subjects.map(subject => `
+                    <div class="history-subject ${subject.failedBySubject ? 'subject-fail' : ''}">
+                      <span>${subject.name}</span>
+                      <strong>${subject.score.toFixed(1)}점</strong>
+                      <small>${subject.correctCount} / ${subject.totalCount}문항${subject.failedBySubject ? ' · 과락' : ''}</small>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="history-review-head">문제별 정오답 · 오답/미응답 ${wrongCount}문항</div>
+                <div class="history-review-list">
+                  ${historyRows.map((row, rowIndex) => `
+                    <div class="history-question-grid">
+                      ${row.map(item => item.correct ? `
+                        <div class="history-question correct">
+                          <span>${item.number}</span>
+                          <small>${item.selected || '-'} / ${item.answer}</small>
+                        </div>
+                      ` : `
+                        <button class="history-question wrong ${item.number === selectedNumber ? 'selected' : ''}" data-history-question="${item.number}" data-history-id="${record.id}">
+                          <span>${item.number}</span>
+                          <small>${item.selected || '-'} / ${item.answer}</small>
+                        </button>
+                      `).join('')}
+                    </div>
+                    ${rowIndex === selectedRow && selectedItem ? `
+                      <div class="history-expanded ${suppressHistoryExpansionAnimation ? 'no-animation' : ''}">
+                        <div class="review-expanded-head">
+                          <div>
+                            <div class="review-expanded-title">${selectedItem.number}번 문제</div>
+                            <div class="review-expanded-meta">선택 ${selectedItem.selected || '-'} · 정답 ${selectedItem.answer}</div>
+                          </div>
+                          <span class="review-result-badge wrong">오답</span>
+                        </div>
+                        <div class="review-question-card">
+                          <img class="review-question-image" src="${getHistoryQuestionImagePath(record, selectedItem.number)}" alt="${selectedItem.number}번 문제">
+                        </div>
+                      </div>
+                    ` : ''}
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  suppressHistoryExpansionAnimation = false;
+
+  container.querySelectorAll('.history-summary').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nextId = btn.dataset.historyId;
+      selectedExamHistoryId = selectedExamHistoryId === nextId ? null : nextId;
+      if (selectedExamHistoryId !== nextId) selectedExamHistoryQuestion = null;
+      renderExamHistory();
+    });
+  });
+
+  container.querySelectorAll('.history-question.wrong').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const recordId = btn.dataset.historyId;
+      const nextQuestion = parseInt(btn.dataset.historyQuestion);
+      const previousQuestion = selectedExamHistoryQuestion?.recordId === recordId
+        ? selectedExamHistoryQuestion.questionNumber
+        : null;
+      const previousRow = previousQuestion ? Math.floor((previousQuestion - 1) / 10) : null;
+      const nextRow = Math.floor((nextQuestion - 1) / 10);
+      selectedExamHistoryId = recordId;
+      selectedExamHistoryQuestion = { recordId, questionNumber: nextQuestion };
+      suppressHistoryExpansionAnimation = previousRow === nextRow;
+      renderExamHistory();
+    });
+  });
+}
+
+async function initExamPractice() {
+  await loadExamIndex();
+  renderExamPractice();
 }
 
 // ===== D-Day =====
@@ -574,6 +1229,8 @@ async function init() {
   renderTabs();
   renderProgress();
   renderCalendar();
+  await initExamPractice();
+  renderExamHistory();
   initPlanViewer();
 }
 

@@ -1,0 +1,629 @@
+{
+  "examId": "agent-20151024-part2",
+  "year": 2015,
+  "round": 26,
+  "part": 2,
+  "questionCount": 120,
+  "pointPerQuestion": 2.5,
+  "source": "COMCBT 학생용 PDF 렌더 이미지 기반",
+  "answerSource": "마지막 페이지 우하단 정답표 이미지 수동 보정",
+  "subjects": [
+    {
+      "name": "공인중개사법령",
+      "start": 1,
+      "end": 40
+    },
+    {
+      "name": "부동산공법",
+      "start": 41,
+      "end": 80
+    },
+    {
+      "name": "부동산공시법&세법",
+      "start": 81,
+      "end": 120
+    }
+  ],
+  "questions": [
+    {
+      "number": 1,
+      "imagePath": "./assets/exams/agent-20151024-part2/q001.png",
+      "answer": 1
+    },
+    {
+      "number": 2,
+      "imagePath": "./assets/exams/agent-20151024-part2/q002.png",
+      "answer": 5
+    },
+    {
+      "number": 3,
+      "imagePath": "./assets/exams/agent-20151024-part2/q003.png",
+      "answer": 3
+    },
+    {
+      "number": 4,
+      "imagePath": "./assets/exams/agent-20151024-part2/q004.png",
+      "answer": 2
+    },
+    {
+      "number": 5,
+      "imagePath": "./assets/exams/agent-20151024-part2/q005.png",
+      "answer": 4
+    },
+    {
+      "number": 6,
+      "imagePath": "./assets/exams/agent-20151024-part2/q006.png",
+      "answer": 3
+    },
+    {
+      "number": 7,
+      "imagePath": "./assets/exams/agent-20151024-part2/q007.png",
+      "answer": 5
+    },
+    {
+      "number": 8,
+      "imagePath": "./assets/exams/agent-20151024-part2/q008.png",
+      "answer": 1
+    },
+    {
+      "number": 9,
+      "imagePath": "./assets/exams/agent-20151024-part2/q009.png",
+      "answer": 4
+    },
+    {
+      "number": 10,
+      "imagePath": "./assets/exams/agent-20151024-part2/q010.png",
+      "answer": 2
+    },
+    {
+      "number": 11,
+      "imagePath": "./assets/exams/agent-20151024-part2/q011.png",
+      "answer": 3
+    },
+    {
+      "number": 12,
+      "imagePath": "./assets/exams/agent-20151024-part2/q012.png",
+      "answer": 4
+    },
+    {
+      "number": 13,
+      "imagePath": "./assets/exams/agent-20151024-part2/q013.png",
+      "answer": 3
+    },
+    {
+      "number": 14,
+      "imagePath": "./assets/exams/agent-20151024-part2/q014.png",
+      "answer": 5
+    },
+    {
+      "number": 15,
+      "imagePath": "./assets/exams/agent-20151024-part2/q015.png",
+      "answer": 2
+    },
+    {
+      "number": 16,
+      "imagePath": "./assets/exams/agent-20151024-part2/q016.png",
+      "answer": 5
+    },
+    {
+      "number": 17,
+      "imagePath": "./assets/exams/agent-20151024-part2/q017.png",
+      "answer": 1
+    },
+    {
+      "number": 18,
+      "imagePath": "./assets/exams/agent-20151024-part2/q018.png",
+      "answer": 1
+    },
+    {
+      "number": 19,
+      "imagePath": "./assets/exams/agent-20151024-part2/q019.png",
+      "answer": 3
+    },
+    {
+      "number": 20,
+      "imagePath": "./assets/exams/agent-20151024-part2/q020.png",
+      "answer": 4
+    },
+    {
+      "number": 21,
+      "imagePath": "./assets/exams/agent-20151024-part2/q021.png",
+      "answer": 2
+    },
+    {
+      "number": 22,
+      "imagePath": "./assets/exams/agent-20151024-part2/q022.png",
+      "answer": 3
+    },
+    {
+      "number": 23,
+      "imagePath": "./assets/exams/agent-20151024-part2/q023.png",
+      "answer": 5
+    },
+    {
+      "number": 24,
+      "imagePath": "./assets/exams/agent-20151024-part2/q024.png",
+      "answer": 2
+    },
+    {
+      "number": 25,
+      "imagePath": "./assets/exams/agent-20151024-part2/q025.png",
+      "answer": 3
+    },
+    {
+      "number": 26,
+      "imagePath": "./assets/exams/agent-20151024-part2/q026.png",
+      "answer": 1
+    },
+    {
+      "number": 27,
+      "imagePath": "./assets/exams/agent-20151024-part2/q027.png",
+      "answer": 2
+    },
+    {
+      "number": 28,
+      "imagePath": "./assets/exams/agent-20151024-part2/q028.png",
+      "answer": 4
+    },
+    {
+      "number": 29,
+      "imagePath": "./assets/exams/agent-20151024-part2/q029.png",
+      "answer": 1
+    },
+    {
+      "number": 30,
+      "imagePath": "./assets/exams/agent-20151024-part2/q030.png",
+      "answer": 3
+    },
+    {
+      "number": 31,
+      "imagePath": "./assets/exams/agent-20151024-part2/q031.png",
+      "answer": 1
+    },
+    {
+      "number": 32,
+      "imagePath": "./assets/exams/agent-20151024-part2/q032.png",
+      "answer": 5
+    },
+    {
+      "number": 33,
+      "imagePath": "./assets/exams/agent-20151024-part2/q033.png",
+      "answer": 5
+    },
+    {
+      "number": 34,
+      "imagePath": "./assets/exams/agent-20151024-part2/q034.png",
+      "answer": 3
+    },
+    {
+      "number": 35,
+      "imagePath": "./assets/exams/agent-20151024-part2/q035.png",
+      "answer": 2
+    },
+    {
+      "number": 36,
+      "imagePath": "./assets/exams/agent-20151024-part2/q036.png",
+      "answer": 4
+    },
+    {
+      "number": 37,
+      "imagePath": "./assets/exams/agent-20151024-part2/q037.png",
+      "answer": 5
+    },
+    {
+      "number": 38,
+      "imagePath": "./assets/exams/agent-20151024-part2/q038.png",
+      "answer": 4
+    },
+    {
+      "number": 39,
+      "imagePath": "./assets/exams/agent-20151024-part2/q039.png",
+      "answer": 3
+    },
+    {
+      "number": 40,
+      "imagePath": "./assets/exams/agent-20151024-part2/q040.png",
+      "answer": 1
+    },
+    {
+      "number": 41,
+      "imagePath": "./assets/exams/agent-20151024-part2/q041.png",
+      "answer": 3
+    },
+    {
+      "number": 42,
+      "imagePath": "./assets/exams/agent-20151024-part2/q042.png",
+      "answer": 1
+    },
+    {
+      "number": 43,
+      "imagePath": "./assets/exams/agent-20151024-part2/q043.png",
+      "answer": 5
+    },
+    {
+      "number": 44,
+      "imagePath": "./assets/exams/agent-20151024-part2/q044.png",
+      "answer": 1
+    },
+    {
+      "number": 45,
+      "imagePath": "./assets/exams/agent-20151024-part2/q045.png",
+      "answer": 4
+    },
+    {
+      "number": 46,
+      "imagePath": "./assets/exams/agent-20151024-part2/q046.png",
+      "answer": 3
+    },
+    {
+      "number": 47,
+      "imagePath": "./assets/exams/agent-20151024-part2/q047.png",
+      "answer": 2
+    },
+    {
+      "number": 48,
+      "imagePath": "./assets/exams/agent-20151024-part2/q048.png",
+      "answer": 3
+    },
+    {
+      "number": 49,
+      "imagePath": "./assets/exams/agent-20151024-part2/q049.png",
+      "answer": 4
+    },
+    {
+      "number": 50,
+      "imagePath": "./assets/exams/agent-20151024-part2/q050.png",
+      "answer": 5
+    },
+    {
+      "number": 51,
+      "imagePath": "./assets/exams/agent-20151024-part2/q051.png",
+      "answer": 2
+    },
+    {
+      "number": 52,
+      "imagePath": "./assets/exams/agent-20151024-part2/q052.png",
+      "answer": 2
+    },
+    {
+      "number": 53,
+      "imagePath": "./assets/exams/agent-20151024-part2/q053.png",
+      "answer": 2
+    },
+    {
+      "number": 54,
+      "imagePath": "./assets/exams/agent-20151024-part2/q054.png",
+      "answer": 3
+    },
+    {
+      "number": 55,
+      "imagePath": "./assets/exams/agent-20151024-part2/q055.png",
+      "answer": 1
+    },
+    {
+      "number": 56,
+      "imagePath": "./assets/exams/agent-20151024-part2/q056.png",
+      "answer": 2
+    },
+    {
+      "number": 57,
+      "imagePath": "./assets/exams/agent-20151024-part2/q057.png",
+      "answer": 4
+    },
+    {
+      "number": 58,
+      "imagePath": "./assets/exams/agent-20151024-part2/q058.png",
+      "answer": 3
+    },
+    {
+      "number": 59,
+      "imagePath": "./assets/exams/agent-20151024-part2/q059.png",
+      "answer": 2
+    },
+    {
+      "number": 60,
+      "imagePath": "./assets/exams/agent-20151024-part2/q060.png",
+      "answer": 4
+    },
+    {
+      "number": 61,
+      "imagePath": "./assets/exams/agent-20151024-part2/q061.png",
+      "answer": 4
+    },
+    {
+      "number": 62,
+      "imagePath": "./assets/exams/agent-20151024-part2/q062.png",
+      "answer": 3
+    },
+    {
+      "number": 63,
+      "imagePath": "./assets/exams/agent-20151024-part2/q063.png",
+      "answer": 1
+    },
+    {
+      "number": 64,
+      "imagePath": "./assets/exams/agent-20151024-part2/q064.png",
+      "answer": 1
+    },
+    {
+      "number": 65,
+      "imagePath": "./assets/exams/agent-20151024-part2/q065.png",
+      "answer": 5
+    },
+    {
+      "number": 66,
+      "imagePath": "./assets/exams/agent-20151024-part2/q066.png",
+      "answer": 4
+    },
+    {
+      "number": 67,
+      "imagePath": "./assets/exams/agent-20151024-part2/q067.png",
+      "answer": 3
+    },
+    {
+      "number": 68,
+      "imagePath": "./assets/exams/agent-20151024-part2/q068.png",
+      "answer": 5
+    },
+    {
+      "number": 69,
+      "imagePath": "./assets/exams/agent-20151024-part2/q069.png",
+      "answer": 2
+    },
+    {
+      "number": 70,
+      "imagePath": "./assets/exams/agent-20151024-part2/q070.png",
+      "answer": 5
+    },
+    {
+      "number": 71,
+      "imagePath": "./assets/exams/agent-20151024-part2/q071.png",
+      "answer": 2
+    },
+    {
+      "number": 72,
+      "imagePath": "./assets/exams/agent-20151024-part2/q072.png",
+      "answer": 1
+    },
+    {
+      "number": 73,
+      "imagePath": "./assets/exams/agent-20151024-part2/q073.png",
+      "answer": 3
+    },
+    {
+      "number": 74,
+      "imagePath": "./assets/exams/agent-20151024-part2/q074.png",
+      "answer": 2
+    },
+    {
+      "number": 75,
+      "imagePath": "./assets/exams/agent-20151024-part2/q075.png",
+      "answer": 3
+    },
+    {
+      "number": 76,
+      "imagePath": "./assets/exams/agent-20151024-part2/q076.png",
+      "answer": 4
+    },
+    {
+      "number": 77,
+      "imagePath": "./assets/exams/agent-20151024-part2/q077.png",
+      "answer": 3
+    },
+    {
+      "number": 78,
+      "imagePath": "./assets/exams/agent-20151024-part2/q078.png",
+      "answer": 1
+    },
+    {
+      "number": 79,
+      "imagePath": "./assets/exams/agent-20151024-part2/q079.png",
+      "answer": 5
+    },
+    {
+      "number": 80,
+      "imagePath": "./assets/exams/agent-20151024-part2/q080.png",
+      "answer": 4
+    },
+    {
+      "number": 81,
+      "imagePath": "./assets/exams/agent-20151024-part2/q081.png",
+      "answer": 2
+    },
+    {
+      "number": 82,
+      "imagePath": "./assets/exams/agent-20151024-part2/q082.png",
+      "answer": 1
+    },
+    {
+      "number": 83,
+      "imagePath": "./assets/exams/agent-20151024-part2/q083.png",
+      "answer": 2
+    },
+    {
+      "number": 84,
+      "imagePath": "./assets/exams/agent-20151024-part2/q084.png",
+      "answer": 4
+    },
+    {
+      "number": 85,
+      "imagePath": "./assets/exams/agent-20151024-part2/q085.png",
+      "answer": 5
+    },
+    {
+      "number": 86,
+      "imagePath": "./assets/exams/agent-20151024-part2/q086.png",
+      "answer": 1
+    },
+    {
+      "number": 87,
+      "imagePath": "./assets/exams/agent-20151024-part2/q087.png",
+      "answer": 5
+    },
+    {
+      "number": 88,
+      "imagePath": "./assets/exams/agent-20151024-part2/q088.png",
+      "answer": 1
+    },
+    {
+      "number": 89,
+      "imagePath": "./assets/exams/agent-20151024-part2/q089.png",
+      "answer": 2
+    },
+    {
+      "number": 90,
+      "imagePath": "./assets/exams/agent-20151024-part2/q090.png",
+      "answer": 1
+    },
+    {
+      "number": 91,
+      "imagePath": "./assets/exams/agent-20151024-part2/q091.png",
+      "answer": 4
+    },
+    {
+      "number": 92,
+      "imagePath": "./assets/exams/agent-20151024-part2/q092.png",
+      "answer": 3
+    },
+    {
+      "number": 93,
+      "imagePath": "./assets/exams/agent-20151024-part2/q093.png",
+      "answer": 2
+    },
+    {
+      "number": 94,
+      "imagePath": "./assets/exams/agent-20151024-part2/q094.png",
+      "answer": 4
+    },
+    {
+      "number": 95,
+      "imagePath": "./assets/exams/agent-20151024-part2/q095.png",
+      "answer": 3
+    },
+    {
+      "number": 96,
+      "imagePath": "./assets/exams/agent-20151024-part2/q096.png",
+      "answer": 5
+    },
+    {
+      "number": 97,
+      "imagePath": "./assets/exams/agent-20151024-part2/q097.png",
+      "answer": 4
+    },
+    {
+      "number": 98,
+      "imagePath": "./assets/exams/agent-20151024-part2/q098.png",
+      "answer": 3
+    },
+    {
+      "number": 99,
+      "imagePath": "./assets/exams/agent-20151024-part2/q099.png",
+      "answer": 5
+    },
+    {
+      "number": 100,
+      "imagePath": "./assets/exams/agent-20151024-part2/q100.png",
+      "answer": 1
+    },
+    {
+      "number": 101,
+      "imagePath": "./assets/exams/agent-20151024-part2/q101.png",
+      "answer": 1
+    },
+    {
+      "number": 102,
+      "imagePath": "./assets/exams/agent-20151024-part2/q102.png",
+      "answer": 4
+    },
+    {
+      "number": 103,
+      "imagePath": "./assets/exams/agent-20151024-part2/q103.png",
+      "answer": 4
+    },
+    {
+      "number": 104,
+      "imagePath": "./assets/exams/agent-20151024-part2/q104.png",
+      "answer": 2
+    },
+    {
+      "number": 105,
+      "imagePath": "./assets/exams/agent-20151024-part2/q105.png",
+      "answer": 2
+    },
+    {
+      "number": 106,
+      "imagePath": "./assets/exams/agent-20151024-part2/q106.png",
+      "answer": 2
+    },
+    {
+      "number": 107,
+      "imagePath": "./assets/exams/agent-20151024-part2/q107.png",
+      "answer": 3
+    },
+    {
+      "number": 108,
+      "imagePath": "./assets/exams/agent-20151024-part2/q108.png",
+      "answer": 4
+    },
+    {
+      "number": 109,
+      "imagePath": "./assets/exams/agent-20151024-part2/q109.png",
+      "answer": 5
+    },
+    {
+      "number": 110,
+      "imagePath": "./assets/exams/agent-20151024-part2/q110.png",
+      "answer": 3
+    },
+    {
+      "number": 111,
+      "imagePath": "./assets/exams/agent-20151024-part2/q111.png",
+      "answer": 1
+    },
+    {
+      "number": 112,
+      "imagePath": "./assets/exams/agent-20151024-part2/q112.png",
+      "answer": 4
+    },
+    {
+      "number": 113,
+      "imagePath": "./assets/exams/agent-20151024-part2/q113.png",
+      "answer": 3
+    },
+    {
+      "number": 114,
+      "imagePath": "./assets/exams/agent-20151024-part2/q114.png",
+      "answer": 5
+    },
+    {
+      "number": 115,
+      "imagePath": "./assets/exams/agent-20151024-part2/q115.png",
+      "answer": 3
+    },
+    {
+      "number": 116,
+      "imagePath": "./assets/exams/agent-20151024-part2/q116.png",
+      "answer": 2
+    },
+    {
+      "number": 117,
+      "imagePath": "./assets/exams/agent-20151024-part2/q117.png",
+      "answer": 2
+    },
+    {
+      "number": 118,
+      "imagePath": "./assets/exams/agent-20151024-part2/q118.png",
+      "answer": 1
+    },
+    {
+      "number": 119,
+      "imagePath": "./assets/exams/agent-20151024-part2/q119.png",
+      "answer": 2
+    },
+    {
+      "number": 120,
+      "imagePath": "./assets/exams/agent-20151024-part2/q120.png",
+      "answer": 5
+    }
+  ]
+}
