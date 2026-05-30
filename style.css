@@ -948,6 +948,35 @@ h2 {
   margin-top: 2px;
 }
 
+.result-breakdowns {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e8ed;
+}
+
+.result-breakdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 12px;
+}
+
+.result-breakdown-row span {
+  font-weight: 700;
+}
+
+.result-breakdown-row strong {
+  font-size: 13px;
+}
+
+.result-breakdown-row small {
+  color: #6e6e73;
+  font-weight: 600;
+}
+
 .fail-badge {
   display: inline-block;
   margin-left: 6px;
@@ -1127,8 +1156,14 @@ h2 {
   border-color: #b8d7f8;
 }
 
+.history-row-head {
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+}
+
 .history-summary {
-  width: 100%;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1143,6 +1178,21 @@ h2 {
 
 .history-summary:hover {
   background: #f5f5f7;
+}
+
+.history-delete-btn {
+  width: 64px;
+  border: 0;
+  border-left: 1px solid #e8e8ed;
+  background: #fff;
+  color: #bf1f1f;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.history-delete-btn:hover {
+  background: #fff0f0;
 }
 
 .history-title {
@@ -1164,10 +1214,18 @@ h2 {
   flex-shrink: 0;
 }
 
-.history-score strong {
-  min-width: 54px;
-  text-align: right;
-  font-size: 15px;
+.history-score-lines {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 8px;
+  max-width: 360px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.history-score-lines span {
+  white-space: nowrap;
 }
 
 .history-pass {
@@ -1226,6 +1284,14 @@ h2 {
   color: #6e6e73;
   font-size: 11px;
   font-weight: 600;
+}
+
+.history-sub-breakdowns {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e8e8ed;
 }
 
 .history-review-head {
@@ -1360,6 +1426,14 @@ button.history-question {
   .history-summary {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .history-row-head {
+    align-items: stretch;
+  }
+
+  .history-delete-btn {
+    width: 56px;
   }
 
   .history-score {

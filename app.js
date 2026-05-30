@@ -689,6 +689,60 @@ function submitExam() {
   renderExamHistory();
 }
 
+function formatScore(score) {
+  return Number.isInteger(score) ? `${score}점` : `${score.toFixed(1)}점`;
+}
+
+function getRangeScore(questionResults, start, end, point = 2.5) {
+  const items = questionResults.filter(item => item.number >= start && item.number <= end);
+  const correctCount = items.filter(item => item.correct).length;
+  return {
+    start,
+    end,
+    correctCount,
+    totalCount: items.length,
+    score: correctCount * point
+  };
+}
+
+function getPart2DetailedScores(questionResults, point = 2.5) {
+  return [
+    { label: '공시법', name: '부동산공시법', ...getRangeScore(questionResults, 81, 104, point) },
+    { label: '세법', name: '부동산세법', ...getRangeScore(questionResults, 105, 120, point) }
+  ];
+}
+
+function getSubjectBreakdowns(part, subject, questionResults, point = 2.5) {
+  if (subject.breakdowns) return subject.breakdowns;
+  if (part === 2 && subject.start === 81 && subject.end === 120) {
+    return getPart2DetailedScores(questionResults, point);
+  }
+  return [];
+}
+
+function getHistoryScoreItems(record) {
+  const result = record.result;
+  const point = 2.5;
+
+  if (record.part === 1) {
+    const first = result.subjects.find(subject => subject.start === 1);
+    const second = result.subjects.find(subject => subject.start === 41);
+    return [
+      { label: '학개론', score: first?.score || 0 },
+      { label: '민법', score: second?.score || 0 }
+    ];
+  }
+
+  const broker = result.subjects.find(subject => subject.start === 1);
+  const publicLaw = result.subjects.find(subject => subject.start === 41);
+  const detailed = getPart2DetailedScores(result.questions, point);
+  return [
+    { label: '중개사법', score: broker?.score || 0 },
+    { label: '공법', score: publicLaw?.score || 0 },
+    ...detailed
+  ];
+}
+
 function gradeExam(exam, attempt) {
   const point = exam.pointPerQuestion || 2.5;
   const questionResults = exam.questions.map(question => {
@@ -711,6 +765,7 @@ function gradeExam(exam, attempt) {
       correctCount,
       totalCount,
       score,
+      breakdowns: getSubjectBreakdowns(exam.part, subject, questionResults, point),
       failedBySubject: score < 40
     };
   });
@@ -750,7 +805,8 @@ function recordExamResult(exam, attempt) {
   const results = loadExamResults().filter(item => item.id !== record.id);
   results.unshift(record);
   saveExamResults(results);
-  selectedExamHistoryId = record.id;
+  selectedExamHistoryId = null;
+  selectedExamHistoryQuestion = null;
 }
 
 function renderExamResult(workspace) {
@@ -777,11 +833,22 @@ function renderExamResult(workspace) {
       ${result.subjects.map(subject => `
         <div class="result-subject ${subject.failedBySubject ? 'subject-fail' : ''}">
           <div class="result-subject-name">${subject.name}</div>
-          <div class="result-subject-score">${subject.score.toFixed(1)}점</div>
+          <div class="result-subject-score">${formatScore(subject.score)}</div>
           <div class="result-subject-detail">
             ${subject.correctCount} / ${subject.totalCount}문항 정답
             ${subject.failedBySubject ? '<span class="fail-badge">과락</span>' : ''}
           </div>
+          ${getSubjectBreakdowns(currentExam.part, subject, result.questions).length ? `
+            <div class="result-breakdowns">
+              ${getSubjectBreakdowns(currentExam.part, subject, result.questions).map(item => `
+                <div class="result-breakdown-row">
+                  <span>${item.name}</span>
+                  <strong>${formatScore(item.score)}</strong>
+                  <small>${item.correctCount} / ${item.totalCount}</small>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
       `).join('')}
     </div>
@@ -883,26 +950,41 @@ function renderExamHistory() {
         for (let i = 0; i < result.questions.length; i += 10) {
           historyRows.push(result.questions.slice(i, i + 10));
         }
+        const historyScoreItems = getHistoryScoreItems(record);
         return `
           <div class="history-item ${isOpen ? 'open' : ''}">
-            <button class="history-summary" data-history-id="${record.id}">
-              <div>
-                <div class="history-title">${record.year}년 ${record.round}회 ${record.part}차</div>
-                <div class="history-meta">${formatSubmittedAt(record.submittedAt)} · ${formatDuration(record.elapsedMs)}</div>
-              </div>
-              <div class="history-score">
-                <span class="history-pass ${result.passed ? 'pass' : 'fail'}">${result.passed ? '합격' : '불합격'}</span>
-                <strong>${result.averageScore.toFixed(1)}점</strong>
-              </div>
-            </button>
+            <div class="history-row-head">
+              <button class="history-summary" data-history-id="${record.id}">
+                <div>
+                  <div class="history-title">${record.year}년 ${record.round}회 ${record.part}차</div>
+                  <div class="history-meta">${formatSubmittedAt(record.submittedAt)} · ${formatDuration(record.elapsedMs)}</div>
+                </div>
+                <div class="history-score">
+                  <span class="history-pass ${result.passed ? 'pass' : 'fail'}">${result.passed ? '합격' : '불합격'}</span>
+                  <div class="history-score-lines">
+                    ${historyScoreItems.map(item => `
+                      <span>${item.label}: ${formatScore(item.score)}</span>
+                    `).join('')}
+                  </div>
+                </div>
+              </button>
+              <button class="history-delete-btn" data-history-id="${record.id}" aria-label="${record.year}년 ${record.round}회 ${record.part}차 기록 삭제">삭제</button>
+            </div>
             ${isOpen ? `
               <div class="history-detail">
                 <div class="history-subjects">
                   ${result.subjects.map(subject => `
                     <div class="history-subject ${subject.failedBySubject ? 'subject-fail' : ''}">
                       <span>${subject.name}</span>
-                      <strong>${subject.score.toFixed(1)}점</strong>
+                      <strong>${formatScore(subject.score)}</strong>
                       <small>${subject.correctCount} / ${subject.totalCount}문항${subject.failedBySubject ? ' · 과락' : ''}</small>
+                      ${getSubjectBreakdowns(record.part, subject, result.questions).length ? `
+                        <div class="history-sub-breakdowns">
+                          ${getSubjectBreakdowns(record.part, subject, result.questions).map(item => `
+                            <small>${item.name}: ${formatScore(item.score)} (${item.correctCount}/${item.totalCount})</small>
+                          `).join('')}
+                        </div>
+                      ` : ''}
                     </div>
                   `).join('')}
                 </div>
@@ -953,6 +1035,24 @@ function renderExamHistory() {
       const nextId = btn.dataset.historyId;
       selectedExamHistoryId = selectedExamHistoryId === nextId ? null : nextId;
       if (selectedExamHistoryId !== nextId) selectedExamHistoryQuestion = null;
+      renderExamHistory();
+    });
+  });
+
+  container.querySelectorAll('.history-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const recordId = btn.dataset.historyId;
+      const record = loadExamResults().find(item => item.id === recordId);
+      const label = record
+        ? `${record.year}년 ${record.round}회 ${record.part}차`
+        : '이 기록';
+      if (!confirm(`${label} 풀이 기록을 삭제할까요?`)) return;
+
+      saveExamResults(loadExamResults().filter(item => item.id !== recordId));
+      if (selectedExamHistoryId === recordId) {
+        selectedExamHistoryId = null;
+        selectedExamHistoryQuestion = null;
+      }
       renderExamHistory();
     });
   });
