@@ -17,6 +17,54 @@ body {
   padding: 24px 16px;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.main-tabs {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.main-tab-btn {
+  min-width: 96px;
+  padding: 10px 18px;
+  border: 1px solid #d1d1d6;
+  border-radius: 8px;
+  background: #fff;
+  color: #6e6e73;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.main-tab-btn:hover {
+  border-color: #0071e3;
+  color: #0071e3;
+}
+
+.main-tab-btn.active {
+  background: #0071e3;
+  border-color: #0071e3;
+  color: #fff;
+}
+
+.app-view[hidden] {
+  display: none;
+}
+
+#deviceCodeSection {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 /* 섹션 공통 */
 section {
   background: #fff;
@@ -501,11 +549,11 @@ h2 {
 .device-code-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   background: #fff;
   border-radius: 12px;
   padding: 12px 16px;
-  margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   flex-wrap: wrap;
 }
@@ -1372,6 +1420,27 @@ button.history-question {
 @media (max-width: 600px) {
   .container {
     padding: 12px 8px;
+  }
+
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .main-tabs {
+    width: 100%;
+  }
+
+  .main-tab-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  #deviceCodeSection,
+  .device-code-bar {
+    justify-content: flex-start;
+    width: 100%;
   }
 
   section {

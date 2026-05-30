@@ -31,6 +31,7 @@ const EXAM_INDEX_PATH = './assets/exams/exam-index.json';
 
 // ===== 상태 =====
 let currentTab = '기본이론';
+let currentView = 'calendar';
 let currentMonth = new Date().getMonth();
 let selectedDate = null;
 let modalTab = '기본이론';
@@ -53,6 +54,28 @@ function getDeviceCode() {
 }
 
 let deviceCode = getDeviceCode();
+
+// ===== 상단 화면 탭 =====
+function renderMainTabs() {
+  const calendarView = document.getElementById('calendarView');
+  const examView = document.getElementById('examView');
+
+  document.querySelectorAll('.main-tab-btn').forEach(btn => {
+    const isActive = btn.dataset.view === currentView;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
+
+  calendarView.hidden = currentView !== 'calendar';
+  examView.hidden = currentView !== 'exam';
+}
+
+document.querySelectorAll('.main-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentView = btn.dataset.view;
+    renderMainTabs();
+  });
+});
 
 // ===== 인메모리 캐시 =====
 let cachedData = {};
@@ -1326,6 +1349,7 @@ function initPlanViewer() {
 async function init() {
   await loadFromCloud();
   renderDeviceCode();
+  renderMainTabs();
   renderTabs();
   renderProgress();
   renderCalendar();

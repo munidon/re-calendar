@@ -9,52 +9,63 @@
 </head>
 <body>
   <div class="container">
-    <!-- 기기 코드 -->
-    <div id="deviceCodeSection"></div>
+    <header class="app-header">
+      <nav class="main-tabs" aria-label="주요 화면">
+        <button class="main-tab-btn active" data-view="calendar" type="button">캘린더</button>
+        <button class="main-tab-btn" data-view="exam" type="button">기출문제</button>
+      </nav>
 
-    <!-- 섹션 1: 캘린더 -->
-    <section class="calendar-section">
-      <div class="calendar-header">
-        <div class="calendar-title-wrap">
-          <h2 id="calendarTitle"></h2>
-          <span class="d-day" id="dDay"></span>
+      <!-- 기기 코드 -->
+      <div id="deviceCodeSection"></div>
+    </header>
+
+    <div class="app-view" id="calendarView">
+      <!-- 섹션 1: 캘린더 -->
+      <section class="calendar-section">
+        <div class="calendar-header">
+          <div class="calendar-title-wrap">
+            <h2 id="calendarTitle"></h2>
+            <span class="d-day" id="dDay"></span>
+          </div>
+          <div class="calendar-nav">
+            <button id="prevMonth" class="nav-btn">&larr;</button>
+            <button id="nextMonth" class="nav-btn">&rarr;</button>
+          </div>
         </div>
-        <div class="calendar-nav">
-          <button id="prevMonth" class="nav-btn">&larr;</button>
-          <button id="nextMonth" class="nav-btn">&rarr;</button>
+        <div class="calendar-grid">
+          <div class="day-header">일</div>
+          <div class="day-header">월</div>
+          <div class="day-header">화</div>
+          <div class="day-header">수</div>
+          <div class="day-header">목</div>
+          <div class="day-header">금</div>
+          <div class="day-header">토</div>
+          <div id="calendarDays" class="calendar-days"></div>
         </div>
-      </div>
-      <div class="calendar-grid">
-        <div class="day-header">일</div>
-        <div class="day-header">월</div>
-        <div class="day-header">화</div>
-        <div class="day-header">수</div>
-        <div class="day-header">목</div>
-        <div class="day-header">금</div>
-        <div class="day-header">토</div>
-        <div id="calendarDays" class="calendar-days"></div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 섹션 2: 수강 진행 현황 -->
-    <section class="progress-section">
-      <h2>수강 진행 현황</h2>
-      <div class="tab-bar" id="tabBar"></div>
-      <div class="progress-content" id="progressContent"></div>
-      <div class="goal-section" id="goalSection"></div>
-    </section>
+      <!-- 섹션 2: 수강 진행 현황 -->
+      <section class="progress-section">
+        <h2>수강 진행 현황</h2>
+        <div class="tab-bar" id="tabBar"></div>
+        <div class="progress-content" id="progressContent"></div>
+        <div class="goal-section" id="goalSection"></div>
+      </section>
+    </div>
 
-    <!-- 섹션 3: 기출문제 풀이 -->
-    <section class="exam-section">
-      <h2>기출문제 풀이</h2>
-      <div id="examPractice"></div>
-    </section>
+    <div class="app-view" id="examView" hidden>
+      <!-- 섹션 3: 기출문제 풀이 -->
+      <section class="exam-section">
+        <h2>기출문제 풀이</h2>
+        <div id="examPractice"></div>
+      </section>
 
-    <!-- 섹션 4: 기출문제 풀이 조회 -->
-    <section class="exam-history-section">
-      <h2>기출문제 풀이 조회</h2>
-      <div id="examHistory"></div>
-    </section>
+      <!-- 섹션 4: 기출문제 풀이 조회 -->
+      <section class="exam-history-section">
+        <h2>기출문제 풀이 조회</h2>
+        <div id="examHistory"></div>
+      </section>
+    </div>
   </div>
 
   <!-- 세부계획서 FAB -->
