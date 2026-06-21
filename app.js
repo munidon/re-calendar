@@ -17,7 +17,7 @@ const TAB_NAMES = ['기본이론', '핵심요약', '기출문제', '예상문제
 
 const TAB_CONFIG = {
   '기본이론': { '부동산학개론': 52, '민법': 50, '공인중개사법 및 실무': 40, '부동산공시법': 40, '부동산세법': 40, '부동산공법': 49 },
-  '핵심요약': { '부동산학개론': 36, '민법': 36, '공인중개사법 및 실무': 32, '부동산공시법': 32, '부동산세법': 32, '부동산공법': 32 },
+  '핵심요약': { '부동산학개론': 37, '민법': 36, '공인중개사법 및 실무': 32, '부동산공시법': 32, '부동산세법': 32, '부동산공법': 48 },
   '기출문제': null,
   '예상문제': null,
   '동형모의': null,
@@ -604,10 +604,10 @@ function renderExamSolver(workspace) {
     </div>
     <div class="question-map">
       ${currentExam.questions.map(q => {
-        const status = currentAttempt.answers[q.number] ? 'answered' : 'unanswered';
-        const current = q.number === question.number ? 'current' : '';
-        return `<button class="question-dot ${status} ${current}" data-question="${q.number}">${q.number}</button>`;
-      }).join('')}
+    const status = currentAttempt.answers[q.number] ? 'answered' : 'unanswered';
+    const current = q.number === question.number ? 'current' : '';
+    return `<button class="question-dot ${status} ${current}" data-question="${q.number}">${q.number}</button>`;
+  }).join('')}
     </div>
   `;
 
@@ -959,22 +959,22 @@ function renderExamHistory() {
     <div class="history-device-note">기기 코드 ${deviceCode.slice(0, 4)}-${deviceCode.slice(4)} 기준으로 저장된 결과입니다.</div>
     <div class="history-list">
       ${results.map(record => {
-        const result = record.result;
-        const isOpen = record.id === selectedExamHistoryId;
-        const wrongCount = result.questions.filter(item => !item.correct).length;
-        const selectedNumber = isOpen && selectedExamHistoryQuestion?.recordId === record.id
-          ? selectedExamHistoryQuestion.questionNumber
-          : null;
-        const selectedItem = selectedNumber
-          ? result.questions.find(item => item.number === selectedNumber && !item.correct)
-          : null;
-        const selectedRow = selectedItem ? Math.floor((selectedItem.number - 1) / 10) : null;
-        const historyRows = [];
-        for (let i = 0; i < result.questions.length; i += 10) {
-          historyRows.push(result.questions.slice(i, i + 10));
-        }
-        const historyScoreItems = getHistoryScoreItems(record);
-        return `
+    const result = record.result;
+    const isOpen = record.id === selectedExamHistoryId;
+    const wrongCount = result.questions.filter(item => !item.correct).length;
+    const selectedNumber = isOpen && selectedExamHistoryQuestion?.recordId === record.id
+      ? selectedExamHistoryQuestion.questionNumber
+      : null;
+    const selectedItem = selectedNumber
+      ? result.questions.find(item => item.number === selectedNumber && !item.correct)
+      : null;
+    const selectedRow = selectedItem ? Math.floor((selectedItem.number - 1) / 10) : null;
+    const historyRows = [];
+    for (let i = 0; i < result.questions.length; i += 10) {
+      historyRows.push(result.questions.slice(i, i + 10));
+    }
+    const historyScoreItems = getHistoryScoreItems(record);
+    return `
           <div class="history-item ${isOpen ? 'open' : ''}">
             <div class="history-row-head">
               <button class="history-summary" data-history-id="${record.id}">
@@ -1047,7 +1047,7 @@ function renderExamHistory() {
             ` : ''}
           </div>
         `;
-      }).join('')}
+  }).join('')}
     </div>
   `;
 
