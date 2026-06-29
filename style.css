@@ -401,12 +401,13 @@ h2 {
 .day-record {
   font-size: 9px;
   color: #6e6e73;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   padding: 1px 3px;
   border-radius: 2px;
   background: #f0f0f5;
+  line-height: 1.25;
 }
 
 /* 모달 */

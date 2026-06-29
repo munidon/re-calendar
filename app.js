@@ -1148,8 +1148,7 @@ function renderCalendar() {
       Object.entries(dayData).forEach(([tab, subjects]) => {
         Object.entries(subjects).forEach(([subj, count]) => {
           if (count > 0) {
-            const shortName = subj.length > 4 ? subj.substring(0, 4) + '..' : subj;
-            entries.push(`${shortName} ${count}`);
+            entries.push(`${subj} ${count}`);
           }
         });
       });
