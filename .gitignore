@@ -1,3 +1,5 @@
 .env.local
 .env
 plan.pdf
+tmp/
+__pycache__/
