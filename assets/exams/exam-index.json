@@ -1,6 +1,15 @@
 {
   "exams": [
     {
+      "examId": "agent-20251025-part1",
+      "year": 2025,
+      "round": 36,
+      "part": 1,
+      "questionCount": 80,
+      "dataPath": "./assets/exams/agent-20251025-part1/exam.json",
+      "status": "available"
+    },
+    {
       "examId": "agent-20241026-part1",
       "year": 2024,
       "round": 35,
@@ -178,6 +187,15 @@
       "part": 1,
       "questionCount": 80,
       "dataPath": "./assets/exams/agent-20051030-part1/exam.json",
+      "status": "available"
+    },
+    {
+      "examId": "agent-20251025-part2",
+      "year": 2025,
+      "round": 36,
+      "part": 2,
+      "questionCount": 120,
+      "dataPath": "./assets/exams/agent-20251025-part2/exam.json",
       "status": "available"
     },
     {
