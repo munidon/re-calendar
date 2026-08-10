@@ -1152,12 +1152,9 @@ function renderCalendar() {
           }
         });
       });
-      recordsHtml = entries.slice(0, 3).map(e =>
+      recordsHtml = entries.map(e =>
         `<div class="day-record">${e}</div>`
       ).join('');
-      if (entries.length > 3) {
-        recordsHtml += `<div class="day-record">+${entries.length - 3}개</div>`;
-      }
     }
 
     html += `
