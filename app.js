@@ -389,10 +389,12 @@ function getExamAttemptKey(examId) {
   return `examAttempt:${examId}`;
 }
 
-function createExamAttempt(exam) {
+function createExamAttempt(exam, options = {}) {
   return {
     examId: exam.examId,
     answers: {},
+    graded: {},
+    instantGrading: options.instantGrading !== false,
     currentQuestion: 1,
     elapsedMs: 0,
     isRunning: true,
@@ -407,7 +409,7 @@ function loadExamAttempt(examId) {
   const raw = localStorage.getItem(getExamAttemptKey(examId));
   if (!raw) return null;
   try {
-    const attempt = JSON.parse(raw);
+    const attempt = normalizeExamAttempt(JSON.parse(raw));
     if (attempt.isRunning && attempt.runningSince) {
       attempt.elapsedMs += Date.now() - attempt.runningSince;
       attempt.runningSince = Date.now();
@@ -418,6 +420,13 @@ function loadExamAttempt(examId) {
     console.error('기출문제 풀이 상태 로드 실패:', e);
     return null;
   }
+}
+
+function normalizeExamAttempt(attempt) {
+  if (!attempt || typeof attempt !== 'object') return attempt;
+  if (!attempt.graded || typeof attempt.graded !== 'object') attempt.graded = {};
+  if (typeof attempt.instantGrading !== 'boolean') attempt.instantGrading = true;
+  return attempt;
 }
 
 function saveExamAttempt(attempt = currentAttempt) {
@@ -564,20 +573,50 @@ function renderExamWorkspace() {
   renderExamSolver(workspace);
 }
 
+function getExamQuestionByNumber(number) {
+  return currentExam?.questions.find(question => question.number === number) || null;
+}
+
+function isQuestionGraded(number) {
+  return Boolean(currentAttempt?.graded?.[number]);
+}
+
+function isQuestionCorrect(number) {
+  const question = getExamQuestionByNumber(number);
+  return Boolean(question) && currentAttempt?.answers[number] === question.answer;
+}
+
+function getInstantGradingStats() {
+  const gradedNumbers = Object.keys(currentAttempt?.graded || {}).map(Number);
+  return {
+    gradedCount: gradedNumbers.length,
+    correctCount: gradedNumbers.filter(number => isQuestionCorrect(number)).length
+  };
+}
+
 function renderExamSolver(workspace) {
   const question = currentExam.questions[currentAttempt.currentQuestion - 1];
   const selectedAnswer = currentAttempt.answers[question.number];
   const unanswered = currentExam.questions.filter(q => !currentAttempt.answers[q.number]).length;
   const elapsed = formatDuration(getElapsedMs());
+  const graded = isQuestionGraded(question.number);
+  const correct = graded && selectedAnswer === question.answer;
+  const { gradedCount, correctCount } = getInstantGradingStats();
+  const gradedSummary = gradedCount
+    ? ` · 채점 ${gradedCount}문항 중 정답 ${correctCount}문항`
+    : '';
 
   workspace.innerHTML = `
     <div class="exam-toolbar">
       <div>
         <div class="exam-title">${currentExam.year}년 ${currentExam.round}회 ${currentExam.part}차</div>
-        <div class="exam-subtitle">${question.number} / ${currentExam.questionCount}번 · 미응답 ${unanswered}문항</div>
+        <div class="exam-subtitle">${question.number} / ${currentExam.questionCount}번 · 미응답 ${unanswered}문항${gradedSummary}</div>
       </div>
       <div class="exam-timer" id="examTimer">${elapsed}</div>
       <div class="exam-actions">
+        <button class="exam-small-btn ${currentAttempt.instantGrading ? 'active' : ''}" id="examInstantBtn" aria-pressed="${currentAttempt.instantGrading}">
+          즉시 채점 ${currentAttempt.instantGrading ? 'ON' : 'OFF'}
+        </button>
         <button class="exam-small-btn" id="examPauseBtn">${currentAttempt.isRunning ? '일시정지' : '재개'}</button>
         <button class="exam-small-btn" id="examResetBtn">초기화</button>
       </div>
@@ -589,12 +628,28 @@ function renderExamSolver(workspace) {
       <div class="answer-panel">
         <div class="answer-label">답안 선택</div>
         <div class="answer-buttons">
-          ${[1, 2, 3, 4, 5].map(value => `
-            <button class="answer-btn ${selectedAnswer === value ? 'selected' : ''}" data-answer="${value}">
+          ${[1, 2, 3, 4, 5].map(value => {
+    const classes = ['answer-btn'];
+    if (selectedAnswer === value) classes.push('selected');
+    if (graded && value === question.answer) classes.push('answer-correct');
+    if (graded && selectedAnswer === value && !correct) classes.push('answer-wrong');
+    return `
+            <button class="${classes.join(' ')}" data-answer="${value}" ${graded ? 'disabled' : ''}>
               ${value}
             </button>
-          `).join('')}
+          `;
+  }).join('')}
         </div>
+        ${graded ? `
+          <div class="answer-feedback ${correct ? 'correct' : 'wrong'}">
+            <span class="answer-feedback-badge">${correct ? '정답' : '오답'}</span>
+            <span class="answer-feedback-detail">내 답 ${selectedAnswer || '-'} · 정답 ${question.answer}</span>
+          </div>
+        ` : `
+          <div class="answer-hint">
+            ${currentAttempt.instantGrading ? '답안을 선택하면 바로 채점됩니다.' : '즉시 채점이 꺼져 있어 제출 후 한 번에 채점됩니다.'}
+          </div>
+        `}
         <div class="question-nav">
           <button class="btn btn-cancel" id="prevQuestionBtn" ${question.number <= 1 ? 'disabled' : ''}>이전</button>
           <button class="btn btn-cancel" id="nextQuestionBtn" ${question.number >= currentExam.questionCount ? 'disabled' : ''}>다음</button>
@@ -604,7 +659,8 @@ function renderExamSolver(workspace) {
     </div>
     <div class="question-map">
       ${currentExam.questions.map(q => {
-    const status = currentAttempt.answers[q.number] ? 'answered' : 'unanswered';
+    let status = currentAttempt.answers[q.number] ? 'answered' : 'unanswered';
+    if (isQuestionGraded(q.number)) status = isQuestionCorrect(q.number) ? 'graded-correct' : 'graded-wrong';
     const current = q.number === question.number ? 'current' : '';
     return `<button class="question-dot ${status} ${current}" data-question="${q.number}">${q.number}</button>`;
   }).join('')}
@@ -613,7 +669,9 @@ function renderExamSolver(workspace) {
 
   workspace.querySelectorAll('.answer-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (isQuestionGraded(question.number)) return;
       currentAttempt.answers[question.number] = parseInt(btn.dataset.answer);
+      if (currentAttempt.instantGrading) currentAttempt.graded[question.number] = true;
       saveExamAttempt();
       renderExamWorkspace();
     });
@@ -621,6 +679,7 @@ function renderExamSolver(workspace) {
 
   workspace.querySelectorAll('.question-dot').forEach(btn => {
     btn.addEventListener('click', () => {
+      gradeCurrentQuestion();
       currentAttempt.currentQuestion = parseInt(btn.dataset.question);
       saveExamAttempt();
       renderExamWorkspace();
@@ -629,12 +688,29 @@ function renderExamSolver(workspace) {
 
   document.getElementById('prevQuestionBtn').addEventListener('click', () => moveQuestion(-1));
   document.getElementById('nextQuestionBtn').addEventListener('click', () => moveQuestion(1));
+  document.getElementById('examInstantBtn').addEventListener('click', toggleInstantGrading);
   document.getElementById('examPauseBtn').addEventListener('click', toggleStopwatch);
   document.getElementById('examResetBtn').addEventListener('click', resetExamAttempt);
   document.getElementById('submitExamBtn').addEventListener('click', submitExam);
 }
 
+function toggleInstantGrading() {
+  if (!currentAttempt) return;
+  currentAttempt.instantGrading = !currentAttempt.instantGrading;
+  if (currentAttempt.instantGrading) gradeCurrentQuestion();
+  saveExamAttempt();
+  renderExamWorkspace();
+}
+
+function gradeCurrentQuestion() {
+  if (!currentAttempt?.instantGrading) return;
+  const number = currentAttempt.currentQuestion;
+  if (!currentAttempt.answers[number]) return;
+  currentAttempt.graded[number] = true;
+}
+
 function moveQuestion(delta) {
+  gradeCurrentQuestion();
   currentAttempt.currentQuestion = Math.min(
     currentExam.questionCount,
     Math.max(1, currentAttempt.currentQuestion + delta)
@@ -690,7 +766,9 @@ function stopExamTicker() {
 function resetExamAttempt() {
   if (!currentExam) return;
   if (!confirm('현재 풀이 기록을 초기화할까요?')) return;
-  currentAttempt = createExamAttempt(currentExam);
+  currentAttempt = createExamAttempt(currentExam, {
+    instantGrading: currentAttempt?.instantGrading !== false
+  });
   saveExamAttempt();
   startStopwatch();
   renderExamWorkspace();
