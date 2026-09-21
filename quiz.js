@@ -13,7 +13,7 @@ import { QUIZ_BANK, QUIZ_SUBJECTS, QUIZ_SUBJECT_ORDER } from './assets/quiz/quiz
 import { mutate } from './assets/quiz/quiz-mutator.js';
 
 const QUIZ_BLANKS = 30;                 // 한 회차에 푸는 빈칸 수
-const QUIZ_SECONDS = 8 * 60;            // 빈칸 30개 기준 제한시간
+const QUIZ_SECONDS = 5 * 60;            // 빈칸 하나당 10초 — 붙잡고 있지 말고 바로 고르는 속도
 const BLANKS_PER_SUBJECT = QUIZ_BLANKS / QUIZ_SUBJECT_ORDER.length;
 const MAX_BLANKS_PER_ITEM = 3;          // 한 지문에서 뚫는 빈칸 수 상한
 const REVIEW_PER_SUBJECT = 2;           // 과목별 복습 빈칸 상한
