@@ -2017,3 +2017,101 @@ button.history-question {
 .quiz-ref-note {
   color: #34a853;
 }
+
+/* 학습 진도 표 */
+.quiz-progress-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.quiz-progress-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 52px 48px 56px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6e6e73;
+}
+
+.quiz-progress-name {
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.quiz-progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: #e8e8ed;
+  overflow: hidden;
+}
+
+.quiz-progress-bar i {
+  display: block;
+  height: 100%;
+  background: #34a853;
+  border-radius: 3px;
+}
+
+.quiz-progress-count {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.quiz-progress-cycle,
+.quiz-progress-review {
+  font-size: 11px;
+  color: #a1a1a6;
+}
+
+.quiz-progress-review {
+  color: #d97706;
+  text-align: right;
+}
+
+/* 복습 / 빈칸 개수 배지 */
+.quiz-review-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.quiz-blank-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0071e3;
+  background: #e8f1fd;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.quiz-item-head .quiz-ref-badge,
+.quiz-item-head .quiz-review-badge {
+  margin-left: auto;
+}
+
+.quiz-item-head .quiz-ref-badge ~ .quiz-mark,
+.quiz-item-head .quiz-review-badge ~ .quiz-mark {
+  margin-left: 0;
+}
+
+.quiz-item .quiz-answer-line + .quiz-answer-line {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .quiz-progress-row {
+    grid-template-columns: 48px 1fr 48px 40px;
+  }
+
+  .quiz-progress-review {
+    display: none;
+  }
+}
