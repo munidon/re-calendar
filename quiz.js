@@ -117,6 +117,24 @@ function rollCycle(progress, subject, rng) {
 
 // ───────────────────────── 출제 ─────────────────────────
 
+// "A가 오르면 B는 내린다" 처럼 인과로 묶인 두 자리를 모두 뚫고 양쪽 다 뒤집으면
+// 그 문장도 참이 되어 버린다(수익률 하락 → MBS 가격 상승). 제대로 아는 사람이
+// 오답 처리되므로, 이런 짝은 한쪽만 뚫는다.
+const REVERSAL_TYPES = new Set(['방향 반전', '서술어 뒤집기']);
+const CAUSAL_RE = /하면|할수록|될수록|수록|으면|이면|인하여|므로|따라서|때문/;
+
+function isCoupledReversal(segments, kept, candidate) {
+  if (!REVERSAL_TYPES.has(candidate.mutationType)) return false;
+  return kept.some(blank => {
+    if (!REVERSAL_TYPES.has(blank.mutationType)) return false;
+    const [from, to] = blank.segmentIndex < candidate.segmentIndex
+      ? [blank.segmentIndex, candidate.segmentIndex]
+      : [candidate.segmentIndex, blank.segmentIndex];
+    const between = segments.slice(from + 1, to).map(segment => segment.text).join('');
+    return CAUSAL_RE.test(between);
+  });
+}
+
 /**
  * 지문 하나에서 빈칸을 만든다.
  * limit    : 이 지문에서 뚫을 빈칸 수 상한
@@ -140,12 +158,14 @@ function buildItem(item, rng, limit, onlyIndex = null) {
     if (!segment || !segment.green || segment.text.length > MAX_BLANK_LENGTH) continue;
     const mutated = mutate(segment.text, rng);
     if (!mutated) continue;
-    blanks.push({
+    const candidate = {
       segmentIndex: index,
       answer: segment.text,
       mutationType: mutated.type,
       options: shuffle([segment.text, mutated.text], rng)
-    });
+    };
+    if (isCoupledReversal(segments, blanks, candidate)) continue;
+    blanks.push(candidate);
   }
 
   blanks.sort((a, b) => a.segmentIndex - b.segmentIndex);
