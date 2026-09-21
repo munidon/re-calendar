@@ -1699,21 +1699,10 @@ button.history-question {
   color: #1d1d1f;
 }
 
-.quiz-timer {
-  margin-left: auto;
-  font-size: 22px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: #0071e3;
-}
-
-.quiz-timer.is-urgent {
-  color: #d70015;
-}
-
 .quiz-actions {
   display: flex;
   gap: 8px;
+  margin-left: auto;
 }
 
 /* 문항 */
@@ -1964,10 +1953,6 @@ button.history-question {
 }
 
 @media (max-width: 600px) {
-  .quiz-timer {
-    font-size: 18px;
-  }
-
   .quiz-actions {
     width: 100%;
   }

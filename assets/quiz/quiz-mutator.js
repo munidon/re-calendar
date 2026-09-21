@@ -49,7 +49,7 @@ const SWAP_PAIRS = [
 /* ── 유형 05 : 행정기관 교환 ── */
 const AGENCIES = [
   '국토교통부장관', '행정안전부장관', '시·도지사',
-  '시장·군수·구청장', '시장·군수', '지적소관청', '등록관청'
+  '시장·군수·구청장', '시장·군수', '지적소관청'
 ];
 
 /* ── 유형 06 : 서술어 뒤집기 (양방향, 긴 규칙 우선) ── */
@@ -99,7 +99,6 @@ const CONCEPTS = [
   ['대리인', '본인'],
   ['전부', '일부'],
   ['포함', '제외'],
-  ['직접', '간접'],
   ['정당한', '부당한'],
   ['우월한', '열등한'],
   ['현저히 낮은', '현저히 높은'],
@@ -107,7 +106,6 @@ const CONCEPTS = [
   ['현재', '장래'],
   ['적법', '위법'],
   ['유효', '무효'],
-  ['무효', '취소'],
   ['선의', '악의'],
   ['고의', '과실'],
   ['해지', '해제'],
@@ -116,21 +114,15 @@ const CONCEPTS = [
   ['추정', '간주'],
   ['공유', '합유'],
   ['소멸', '존속'],
-  ['즉시', '지체 없이'],
-  ['엄격하고', '완화하여'],
   ['원칙적으로', '예외적으로'],
   ['예외적인', '원칙적인'],
   ['반드시', '가급적']
 ];
 
-/* ── 유형 08 : 및 ↔ 또는 ── */
-const CONJUNCTIONS = [
-  ['이거나', '이고'],
-  ['하거나', '하고'],
-  ['되거나', '되고'],
-  ['이상이거나', '이상이고'],
-  [' 및 ', ' 또는 ']
-];
+/* 유형 08(및 ↔ 또는)은 쓰지 않는다.
+   실제로 바꿔 낼 만한 자리는 공인중개사법의 '서명 또는 날인' 정도인데
+   이 책 304지문에는 그 표현이 없다. 나머지 '및/또는'은 전부 단순 나열이라
+   바꾸면 문장만 어색해지고 문제가 되지 않는다. */
 
 /* ── 유형 13 : 행위 형식 교체 ── */
 const ACT_FORMS = ['인가', '승인', '허가', '신고'];
@@ -266,13 +258,37 @@ function formatNumber(value) {
   return value >= 1000 ? value.toLocaleString('en-US') : String(value);
 }
 
+/* 숫자를 바꿨을 때 범위가 뒤집히거나 같아지면("7명 이상 11명 이내" → "11명 이상
+   11명 이내") 말이 되지 않는다. 그런 결과는 버린다. */
+const RANGE_PATTERNS = [
+  /(\d[\d,]*)\s*[가-힣a-zA-Z㎡²]*\s*(?:이상|초과)\s*(\d[\d,]*)\s*[가-힣a-zA-Z㎡²]*\s*(?:이내|이하|미만)/g,
+  /(\d[\d,]*)\s*[~∼]\s*(\d[\d,]*)/g
+];
+
+function hasBrokenRange(text) {
+  for (const pattern of RANGE_PATTERNS) {
+    pattern.lastIndex = 0;
+    for (const match of text.matchAll(pattern)) {
+      const low = parseInt(match[1].replace(/,/g, ''), 10);
+      const high = parseInt(match[2].replace(/,/g, ''), 10);
+      if (low >= high) return true;
+    }
+  }
+  return false;
+}
+
 /* 짧고 흔한 낱말은 다른 낱말의 일부일 때 바꾸면 없는 용어가 만들어진다
    (신청정보 → 직권정보, 공동구 → 단독구). 그래서 낱말로 홀로 설 때만 바꾼다. */
 const STRICT_STANDALONE = new Set(['단독', '공동', '직권', '신청', '촉탁']);
+/* 인가·승인·허가·신고는 앞말과 붙어 하나의 절차명이 되는 일이 많다.
+   '이전신고'를 바꾸면 '이전인가' 같은 없는 말이 된다. */
+const NOUN_STANDALONE = new Set(['인가', '승인', '허가', '신고']);
+const NOUN_TAIL_RE = /^(을|를|은|는|이|가|의|에|도|만|와|과|받)/;
 const SOFT_STANDALONE = new Set([
   '소멸', '존속', '증명', '추정', '간주', '전부', '일부', '포함', '제외',
   '직접', '간접', '현재', '장래', '유효', '무효', '취소', '적법', '위법',
-  '선의', '악의', '고의', '과실', '해지', '해제', '갱신', '종료', '공유', '합유'
+  '선의', '악의', '고의', '과실', '해지', '해제', '갱신', '종료', '공유', '합유',
+  '대리인', '본인'
 ]);
 
 /* 붙여 써도 바꾼 결과가 실제로 쓰이는 용어가 되는 예외 */
@@ -281,13 +297,14 @@ const COMPOUND_ALLOW = [
   '해제조건', '해지조건', '공유물', '합유물', '무효행위', '취소행위'
 ];
 
-const PARTICLE_RE = /^(으로|로|은|는|이|가|을|를|에|의|와|과|도|만|까지|부터|이나|이며|이고|이라|일)/;
+const PARTICLE_RE = /^(으로|로|은|는|이|가|을|를|에|의|와|과|도|만|까지|부터|이나|이며|이고|이라)/;
 const VERB_TAIL_RE = /^(하|한|할|함|해|된|될|되|시)/;
 
 // token 이 text[index] 위치에서 "낱말로 홀로 서 있는지" 판단한다.
 function isStandaloneAt(text, index, token) {
   const strict = STRICT_STANDALONE.has(token);
-  if (!strict && !SOFT_STANDALONE.has(token)) return true;
+  const noun = NOUN_STANDALONE.has(token);
+  if (!strict && !noun && !SOFT_STANDALONE.has(token)) return true;
 
   const isHangul = ch => Boolean(ch) && /[가-힣]/.test(ch);
   if (isHangul(text[index - 1])) return false; // 앞에 한글이 붙으면 합성어
@@ -298,6 +315,10 @@ function isStandaloneAt(text, index, token) {
   // 단독·직권 계열은 "단독으로 / 직권에 따라" 같은 부사어 자리에서만 바꾼다.
   // "일괄하여 신청"의 신청처럼 서술어 자리에 있으면 바꿀 수 없다.
   if (strict) return /^(으로|로|에|의)/.test(rest);
+
+  // 인가·승인·허가·신고는 조사나 '받-'만 뒤따를 때 바꾼다.
+  // '허가구역', '신고확인서', '신고하지'처럼 뒷말과 붙으면 그대로 둔다.
+  if (noun) return !isHangul(rest[0]) || NOUN_TAIL_RE.test(rest);
 
   if (!isHangul(rest[0])) return true;         // 뒤가 조사·기호·끝이면 안전
   if (PARTICLE_RE.test(rest)) return true;
@@ -409,7 +430,9 @@ function collectCycleOps(text, cycle, type, rng) {
         other !== token && other.includes(token) && text.slice(Math.max(0, idx - other.length), idx + other.length).includes(other)
       );
       if (longer) continue;
-      const others = cycle.filter(v => v !== token && !v.includes(token) && !token.includes(v));
+      if (!isStandaloneAt(text, idx, token)) continue;
+      const others = cycle.filter(v =>
+        v !== token && !v.includes(token) && !token.includes(v) && !text.includes(v));
       if (!others.length) continue;
       ops.push({
         type,
@@ -494,8 +517,7 @@ export function mutate(original, rng = Math.random) {
     ...collectPairOps(text, DIRECTIONS, '방향 반전'),
     ...collectPairOps(text, CONCEPTS, '닮은 개념 교환'),
     ...collectCycleOps(text, ACT_FORMS, '행위 형식 교체', rng),
-    ...collectPairOps(text, PROCEDURES, '단독·직권 교체'),
-    ...collectPairOps(text, CONJUNCTIONS, '및 ↔ 또는')
+    ...collectPairOps(text, PROCEDURES, '단독·직권 교체')
   ];
 
   if (!ops.length) ops = collectTailOps(text);
@@ -513,7 +535,7 @@ export function mutate(original, rng = Math.random) {
     } catch (e) {
       continue;
     }
-    if (result && result !== text) {
+    if (result && result !== text && !hasBrokenRange(result)) {
       return { text: result, type: op.type };
     }
   }
