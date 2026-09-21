@@ -1,6 +1,7 @@
 import { firebaseConfig } from './config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { initQuiz } from './quiz.js';
 
 // ===== Firebase 설정 =====
 
@@ -72,8 +73,11 @@ let deviceCode = getDeviceCode();
 
 // ===== 상단 화면 탭 =====
 function renderMainTabs() {
-  const calendarView = document.getElementById('calendarView');
-  const examView = document.getElementById('examView');
+  const views = {
+    calendar: document.getElementById('calendarView'),
+    exam: document.getElementById('examView'),
+    quiz: document.getElementById('quizView')
+  };
 
   document.querySelectorAll('.main-tab-btn').forEach(btn => {
     const isActive = btn.dataset.view === currentView;
@@ -81,8 +85,9 @@ function renderMainTabs() {
     btn.setAttribute('aria-selected', String(isActive));
   });
 
-  calendarView.hidden = currentView !== 'calendar';
-  examView.hidden = currentView !== 'exam';
+  Object.entries(views).forEach(([name, element]) => {
+    if (element) element.hidden = currentView !== name;
+  });
 }
 
 document.querySelectorAll('.main-tab-btn').forEach(btn => {
@@ -1563,6 +1568,7 @@ async function init() {
   renderCalendar();
   await initExamPractice();
   renderExamHistory();
+  initQuiz();
   initPlanViewer();
 }
 
