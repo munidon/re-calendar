@@ -29,6 +29,21 @@ const MAX_MONTH = 9;
 const YEAR = 2026;
 const EXAM_INDEX_PATH = './assets/exams/exam-index.json';
 
+// 기출문제 과목 구성 (모든 회차 공통)
+const EXAM_SCOPE_ALL = 'all';
+
+const EXAM_SUBJECT_CATALOG = {
+  1: [
+    { key: '부동산학개론', name: '부동산학개론', short: '학개론', start: 1, end: 40 },
+    { key: '민법', name: '민법', short: '민법', start: 41, end: 80 }
+  ],
+  2: [
+    { key: '공인중개사법령', name: '공인중개사법령', short: '중개사법', start: 1, end: 40 },
+    { key: '부동산공법', name: '부동산공법', short: '공법', start: 41, end: 80 },
+    { key: '부동산공시법&세법', name: '부동산공시법&세법', short: '공시법·세법', start: 81, end: 120 }
+  ]
+};
+
 // ===== 상태 =====
 let currentTab = '기본이론';
 let currentView = 'calendar';
@@ -85,6 +100,7 @@ let cachedExamResults = [];
 // ===== 기출문제 풀이 상태 =====
 let examIndex = [];
 let selectedExamPart = 1;
+let selectedExamSubjectKey = EXAM_SCOPE_ALL;
 let selectedExamId = null;
 let currentExam = null;
 let currentAttempt = null;
@@ -385,17 +401,20 @@ function renderGoalSection() {
 }
 
 // ===== 기출문제 풀이 =====
-function getExamAttemptKey(examId) {
-  return `examAttempt:${examId}`;
+function getExamAttemptKey(examId, subjectKey = EXAM_SCOPE_ALL) {
+  return subjectKey === EXAM_SCOPE_ALL
+    ? `examAttempt:${examId}`
+    : `examAttempt:${examId}:${subjectKey}`;
 }
 
 function createExamAttempt(exam, options = {}) {
   return {
     examId: exam.examId,
+    subjectKey: exam.subjectKey || EXAM_SCOPE_ALL,
     answers: {},
     graded: {},
     instantGrading: options.instantGrading !== false,
-    currentQuestion: 1,
+    currentQuestion: exam.questions[0]?.number || 1,
     elapsedMs: 0,
     isRunning: true,
     runningSince: Date.now(),
@@ -405,8 +424,8 @@ function createExamAttempt(exam, options = {}) {
   };
 }
 
-function loadExamAttempt(examId) {
-  const raw = localStorage.getItem(getExamAttemptKey(examId));
+function loadExamAttempt(examId, subjectKey = EXAM_SCOPE_ALL) {
+  const raw = localStorage.getItem(getExamAttemptKey(examId, subjectKey));
   if (!raw) return null;
   try {
     const attempt = normalizeExamAttempt(JSON.parse(raw));
@@ -426,12 +445,14 @@ function normalizeExamAttempt(attempt) {
   if (!attempt || typeof attempt !== 'object') return attempt;
   if (!attempt.graded || typeof attempt.graded !== 'object') attempt.graded = {};
   if (typeof attempt.instantGrading !== 'boolean') attempt.instantGrading = true;
+  if (!attempt.subjectKey) attempt.subjectKey = EXAM_SCOPE_ALL;
   return attempt;
 }
 
 function saveExamAttempt(attempt = currentAttempt) {
   if (!attempt?.examId) return;
-  localStorage.setItem(getExamAttemptKey(attempt.examId), JSON.stringify(attempt));
+  const key = getExamAttemptKey(attempt.examId, attempt.subjectKey || EXAM_SCOPE_ALL);
+  localStorage.setItem(key, JSON.stringify(attempt));
 }
 
 function getElapsedMs(attempt = currentAttempt) {
@@ -477,6 +498,73 @@ function getAvailableExamsForPart(part) {
     .sort((a, b) => b.year - a.year || b.round - a.round);
 }
 
+function getSubjectCatalog(part) {
+  return EXAM_SUBJECT_CATALOG[part] || [];
+}
+
+function findCatalogSubject(part, subjectKey) {
+  return getSubjectCatalog(part).find(subject => subject.key === subjectKey) || null;
+}
+
+function getSubjectShortLabel(name) {
+  for (const subjects of Object.values(EXAM_SUBJECT_CATALOG)) {
+    const found = subjects.find(subject => subject.name === name);
+    if (found) return found.short;
+  }
+  return name;
+}
+
+function getPartQuestionCount(part) {
+  return getSubjectCatalog(part).reduce((sum, subject) => sum + (subject.end - subject.start + 1), 0);
+}
+
+function getScopeValue(part, subjectKey) {
+  return `${part}:${subjectKey}`;
+}
+
+function getScopeLabel(part, subjectKey) {
+  return subjectKey === EXAM_SCOPE_ALL ? `${part}차 전체` : `${part}차 · ${subjectKey}`;
+}
+
+// 선택한 과목 범위만 남긴 시험 객체를 만든다 (전체 선택 시 원본 그대로)
+function scopeExamToSubject(exam, subjectKey) {
+  if (!exam) return null;
+  const subject = subjectKey === EXAM_SCOPE_ALL
+    ? null
+    : (exam.subjects?.find(item => item.name === subjectKey) || findCatalogSubject(exam.part, subjectKey));
+
+  if (!subject) {
+    return {
+      ...exam,
+      subjectKey: EXAM_SCOPE_ALL,
+      subjectName: null,
+      scopeLabel: getScopeLabel(exam.part, EXAM_SCOPE_ALL)
+    };
+  }
+
+  const questions = exam.questions.filter(q => q.number >= subject.start && q.number <= subject.end);
+  return {
+    ...exam,
+    subjectKey: subject.name,
+    subjectName: subject.name,
+    scopeLabel: getScopeLabel(exam.part, subject.name),
+    subjects: [{ ...subject }],
+    questions,
+    questionCount: questions.length
+  };
+}
+
+function getCurrentQuestionIndex() {
+  if (!currentExam || !currentAttempt) return 0;
+  const index = currentExam.questions.findIndex(q => q.number === currentAttempt.currentQuestion);
+  return index >= 0 ? index : 0;
+}
+
+function getQuestionRow(questions, number) {
+  const index = questions.findIndex(item => item.number === number);
+  return index >= 0 ? Math.floor(index / 10) : null;
+}
+
 function renderExamPractice() {
   const container = document.getElementById('examPractice');
   if (!container) return;
@@ -484,17 +572,37 @@ function renderExamPractice() {
   const availableExams = getAvailableExamsForPart(selectedExamPart);
   const examOptions = availableExams.map(exam => `
     <option value="${exam.examId}" ${exam.examId === selectedExamId ? 'selected' : ''}>
-      ${exam.year}년 ${exam.round}회 (${exam.questionCount}문항)
+      ${exam.year}년 ${exam.round}회
     </option>
   `).join('');
 
+  const selectedScopeValue = getScopeValue(selectedExamPart, selectedExamSubjectKey);
+  const scopeOptions = [1, 2].map(part => {
+    const allValue = getScopeValue(part, EXAM_SCOPE_ALL);
+    const subjectOptions = getSubjectCatalog(part).map(subject => {
+      const value = getScopeValue(part, subject.key);
+      return `
+        <option value="${value}" ${value === selectedScopeValue ? 'selected' : ''}>
+          ${subject.name} (${subject.end - subject.start + 1}문항)
+        </option>
+      `;
+    }).join('');
+    return `
+      <optgroup label="${part}차">
+        <option value="${allValue}" ${allValue === selectedScopeValue ? 'selected' : ''}>
+          ${part}차 전체 (${getPartQuestionCount(part)}문항)
+        </option>
+        ${subjectOptions}
+      </optgroup>
+    `;
+  }).join('');
+
   container.innerHTML = `
     <div class="exam-picker">
-      <div class="exam-field">
-        <label for="examPartSelect">시험 구분</label>
-        <select id="examPartSelect">
-          <option value="1" ${selectedExamPart === 1 ? 'selected' : ''}>1차</option>
-          <option value="2" ${selectedExamPart === 2 ? 'selected' : ''}>2차</option>
+      <div class="exam-field exam-field-wide">
+        <label for="examScopeSelect">시험 구분 / 과목</label>
+        <select id="examScopeSelect">
+          ${scopeOptions}
         </select>
       </div>
       <div class="exam-field">
@@ -508,14 +616,18 @@ function renderExamPractice() {
     <div class="exam-workspace" id="examWorkspace"></div>
   `;
 
-  document.getElementById('examPartSelect').addEventListener('change', (e) => {
-    selectedExamPart = parseInt(e.target.value);
-    selectedExamId = getAvailableExamsForPart(selectedExamPart)[0]?.examId || null;
+  document.getElementById('examScopeSelect').addEventListener('change', (e) => {
+    const [partValue, subjectKey] = e.target.value.split(':');
+    selectedExamPart = parseInt(partValue);
+    selectedExamSubjectKey = subjectKey || EXAM_SCOPE_ALL;
+    const availableForPart = getAvailableExamsForPart(selectedExamPart);
+    if (!availableForPart.some(exam => exam.examId === selectedExamId)) {
+      selectedExamId = availableForPart[0]?.examId || null;
+    }
     currentExam = null;
     currentAttempt = null;
     stopExamTicker();
     renderExamPractice();
-    renderExamWorkspace();
   });
 
   document.getElementById('examRoundSelect').addEventListener('change', (e) => {
@@ -533,8 +645,12 @@ function renderExamPractice() {
 async function startSelectedExam() {
   if (!selectedExamId) return;
   try {
-    currentExam = await loadExam(selectedExamId);
-    currentAttempt = loadExamAttempt(selectedExamId) || createExamAttempt(currentExam);
+    currentExam = scopeExamToSubject(await loadExam(selectedExamId), selectedExamSubjectKey);
+    currentAttempt = loadExamAttempt(selectedExamId, currentExam.subjectKey) || createExamAttempt(currentExam);
+    currentAttempt.subjectKey = currentExam.subjectKey;
+    if (!currentExam.questions.some(q => q.number === currentAttempt.currentQuestion)) {
+      currentAttempt.currentQuestion = currentExam.questions[0]?.number || 1;
+    }
     if (!currentAttempt.submittedAt) {
       startStopwatch();
     }
@@ -561,7 +677,7 @@ function renderExamWorkspace() {
   }
 
   if (!currentExam || !currentAttempt) {
-    workspace.innerHTML = '<div class="exam-empty">시험 시작을 누르면 풀이 시간이 자동으로 측정됩니다.</div>';
+    workspace.innerHTML = `<div class="exam-empty">${getScopeLabel(selectedExamPart, selectedExamSubjectKey)} · 시험 시작을 누르면 풀이 시간이 자동으로 측정됩니다.</div>`;
     return;
   }
 
@@ -595,7 +711,8 @@ function getInstantGradingStats() {
 }
 
 function renderExamSolver(workspace) {
-  const question = currentExam.questions[currentAttempt.currentQuestion - 1];
+  const questionIndex = getCurrentQuestionIndex();
+  const question = currentExam.questions[questionIndex];
   const selectedAnswer = currentAttempt.answers[question.number];
   const unanswered = currentExam.questions.filter(q => !currentAttempt.answers[q.number]).length;
   const elapsed = formatDuration(getElapsedMs());
@@ -609,8 +726,8 @@ function renderExamSolver(workspace) {
   workspace.innerHTML = `
     <div class="exam-toolbar">
       <div>
-        <div class="exam-title">${currentExam.year}년 ${currentExam.round}회 ${currentExam.part}차</div>
-        <div class="exam-subtitle">${question.number} / ${currentExam.questionCount}번 · 미응답 ${unanswered}문항${gradedSummary}</div>
+        <div class="exam-title">${currentExam.year}년 ${currentExam.round}회 ${currentExam.scopeLabel}</div>
+        <div class="exam-subtitle">${question.number}번 (${questionIndex + 1} / ${currentExam.questionCount}문항) · 미응답 ${unanswered}문항${gradedSummary}</div>
       </div>
       <div class="exam-timer" id="examTimer">${elapsed}</div>
       <div class="exam-actions">
@@ -651,8 +768,8 @@ function renderExamSolver(workspace) {
           </div>
         `}
         <div class="question-nav">
-          <button class="btn btn-cancel" id="prevQuestionBtn" ${question.number <= 1 ? 'disabled' : ''}>이전</button>
-          <button class="btn btn-cancel" id="nextQuestionBtn" ${question.number >= currentExam.questionCount ? 'disabled' : ''}>다음</button>
+          <button class="btn btn-cancel" id="prevQuestionBtn" ${questionIndex <= 0 ? 'disabled' : ''}>이전</button>
+          <button class="btn btn-cancel" id="nextQuestionBtn" ${questionIndex >= currentExam.questionCount - 1 ? 'disabled' : ''}>다음</button>
         </div>
         <button class="btn btn-confirm submit-exam-btn" id="submitExamBtn">제출 및 채점</button>
       </div>
@@ -711,10 +828,11 @@ function gradeCurrentQuestion() {
 
 function moveQuestion(delta) {
   gradeCurrentQuestion();
-  currentAttempt.currentQuestion = Math.min(
-    currentExam.questionCount,
-    Math.max(1, currentAttempt.currentQuestion + delta)
+  const nextIndex = Math.min(
+    currentExam.questions.length - 1,
+    Math.max(0, getCurrentQuestionIndex() + delta)
   );
+  currentAttempt.currentQuestion = currentExam.questions[nextIndex].number;
   saveExamAttempt();
   renderExamWorkspace();
 }
@@ -821,27 +939,34 @@ function getSubjectBreakdowns(part, subject, questionResults, point = 2.5) {
   return [];
 }
 
+function isSubjectScopeKey(subjectKey) {
+  return Boolean(subjectKey) && subjectKey !== EXAM_SCOPE_ALL;
+}
+
+function getResultStatusLabel(result, subjectScope) {
+  if (!subjectScope) return result.passed ? '합격' : '불합격';
+  if (result.passed) return '합격권';
+  return result.hasSubjectFail ? '과락' : '기준 미달';
+}
+
 function getHistoryScoreItems(record) {
   const result = record.result;
   const point = 2.5;
 
-  if (record.part === 1) {
-    const first = result.subjects.find(subject => subject.start === 1);
-    const second = result.subjects.find(subject => subject.start === 41);
-    return [
-      { label: '학개론', score: first?.score || 0 },
-      { label: '민법', score: second?.score || 0 }
-    ];
-  }
+  const subjectScope = isSubjectScopeKey(record.subjectKey);
 
-  const broker = result.subjects.find(subject => subject.start === 1);
-  const publicLaw = result.subjects.find(subject => subject.start === 41);
-  const detailed = getPart2DetailedScores(result.questions, point);
-  return [
-    { label: '중개사법', score: broker?.score || 0 },
-    { label: '공법', score: publicLaw?.score || 0 },
-    ...detailed
-  ];
+  return result.subjects.flatMap(subject => {
+    const subjectItem = { label: getSubjectShortLabel(subject.name), score: subject.score };
+    const breakdowns = getSubjectBreakdowns(record.part, subject, result.questions, point)
+      .map(item => ({ label: item.label, score: item.score }));
+    if (!breakdowns.length) return [subjectItem];
+    return subjectScope ? [subjectItem, ...breakdowns] : breakdowns;
+  });
+}
+
+function getRecordScopeLabel(record) {
+  const subjectKey = record.subjectKey || EXAM_SCOPE_ALL;
+  return `${record.year}년 ${record.round}회 ${getScopeLabel(record.part, subjectKey)}`;
 }
 
 function gradeExam(exam, attempt) {
@@ -886,13 +1011,16 @@ function gradeExam(exam, attempt) {
 
 function createExamResultRecord(exam, attempt) {
   const submittedAt = attempt.submittedAt || new Date().toISOString();
+  const subjectKey = exam.subjectKey || EXAM_SCOPE_ALL;
   return {
-    id: `${exam.examId}:${submittedAt}`,
+    id: `${exam.examId}:${subjectKey}:${submittedAt}`,
     deviceCode,
     examId: exam.examId,
     year: exam.year,
     round: exam.round,
     part: exam.part,
+    subjectKey,
+    subjectName: exam.subjectName || null,
     questionCount: exam.questionCount,
     submittedAt,
     elapsedMs: attempt.elapsedMs,
@@ -916,17 +1044,23 @@ function renderExamResult(workspace) {
   const selectedReviewNumber = currentAttempt.reviewQuestion;
   const selectedReviewItem = result.questions.find(item => item.number === selectedReviewNumber);
   const selectedReviewQuestion = currentExam.questions.find(question => question.number === selectedReviewNumber);
-  const selectedReviewRow = selectedReviewNumber ? Math.floor((selectedReviewNumber - 1) / 10) : null;
+  const selectedReviewRow = selectedReviewNumber ? getQuestionRow(result.questions, selectedReviewNumber) : null;
   const reviewRows = [];
   for (let i = 0; i < result.questions.length; i += 10) {
     reviewRows.push(result.questions.slice(i, i + 10));
   }
 
+  const isSubjectScope = isSubjectScopeKey(currentExam.subjectKey);
+  const statusLabel = getResultStatusLabel(result, isSubjectScope);
+  const scoreLabel = isSubjectScope
+    ? `${formatScore(result.averageScore)}`
+    : `전 과목 평균 ${result.averageScore.toFixed(1)}점`;
+
   workspace.innerHTML = `
     <div class="result-summary ${result.passed ? 'pass' : 'fail'}">
       <div>
-        <div class="result-status">${result.passed ? '합격' : '불합격'}</div>
-        <div class="result-meta">전 과목 평균 ${result.averageScore.toFixed(1)}점 · 총 풀이 시간 ${formatDuration(result.elapsedMs)}</div>
+        <div class="result-status">${statusLabel}</div>
+        <div class="result-meta">${currentExam.year}년 ${currentExam.round}회 ${currentExam.scopeLabel} · ${scoreLabel} · 총 풀이 시간 ${formatDuration(result.elapsedMs)}</div>
       </div>
       <button class="btn btn-cancel" id="reviewResetBtn">다시 풀기</button>
     </div>
@@ -995,8 +1129,8 @@ function renderExamResult(workspace) {
     btn.addEventListener('click', () => {
       const nextQuestion = parseInt(btn.dataset.question);
       const previousQuestion = currentAttempt.reviewQuestion;
-      const previousRow = previousQuestion ? Math.floor((previousQuestion - 1) / 10) : null;
-      const nextRow = Math.floor((nextQuestion - 1) / 10);
+      const previousRow = previousQuestion ? getQuestionRow(result.questions, previousQuestion) : null;
+      const nextRow = getQuestionRow(result.questions, nextQuestion);
       suppressReviewExpansionAnimation = previousRow === nextRow;
       currentAttempt.reviewQuestion = nextQuestion;
       saveExamAttempt();
@@ -1046,7 +1180,7 @@ function renderExamHistory() {
     const selectedItem = selectedNumber
       ? result.questions.find(item => item.number === selectedNumber && !item.correct)
       : null;
-    const selectedRow = selectedItem ? Math.floor((selectedItem.number - 1) / 10) : null;
+    const selectedRow = selectedItem ? getQuestionRow(result.questions, selectedItem.number) : null;
     const historyRows = [];
     for (let i = 0; i < result.questions.length; i += 10) {
       historyRows.push(result.questions.slice(i, i + 10));
@@ -1057,11 +1191,11 @@ function renderExamHistory() {
             <div class="history-row-head">
               <button class="history-summary" data-history-id="${record.id}">
                 <div>
-                  <div class="history-title">${record.year}년 ${record.round}회 ${record.part}차</div>
+                  <div class="history-title">${getRecordScopeLabel(record)}</div>
                   <div class="history-meta">${formatSubmittedAt(record.submittedAt)} · ${formatDuration(record.elapsedMs)}</div>
                 </div>
                 <div class="history-score">
-                  <span class="history-pass ${result.passed ? 'pass' : 'fail'}">${result.passed ? '합격' : '불합격'}</span>
+                  <span class="history-pass ${result.passed ? 'pass' : 'fail'}">${getResultStatusLabel(result, isSubjectScopeKey(record.subjectKey))}</span>
                   <div class="history-score-lines">
                     ${historyScoreItems.map(item => `
                       <span>${item.label}: ${formatScore(item.score)}</span>
@@ -1069,7 +1203,7 @@ function renderExamHistory() {
                   </div>
                 </div>
               </button>
-              <button class="history-delete-btn" data-history-id="${record.id}" aria-label="${record.year}년 ${record.round}회 ${record.part}차 기록 삭제">삭제</button>
+              <button class="history-delete-btn" data-history-id="${record.id}" aria-label="${getRecordScopeLabel(record)} 기록 삭제">삭제</button>
             </div>
             ${isOpen ? `
               <div class="history-detail">
@@ -1144,9 +1278,7 @@ function renderExamHistory() {
     btn.addEventListener('click', () => {
       const recordId = btn.dataset.historyId;
       const record = loadExamResults().find(item => item.id === recordId);
-      const label = record
-        ? `${record.year}년 ${record.round}회 ${record.part}차`
-        : '이 기록';
+      const label = record ? getRecordScopeLabel(record) : '이 기록';
       if (!confirm(`${label} 풀이 기록을 삭제할까요?`)) return;
 
       saveExamResults(loadExamResults().filter(item => item.id !== recordId));
@@ -1165,8 +1297,10 @@ function renderExamHistory() {
       const previousQuestion = selectedExamHistoryQuestion?.recordId === recordId
         ? selectedExamHistoryQuestion.questionNumber
         : null;
-      const previousRow = previousQuestion ? Math.floor((previousQuestion - 1) / 10) : null;
-      const nextRow = Math.floor((nextQuestion - 1) / 10);
+      const historyQuestions = loadExamResults()
+        .find(item => item.id === recordId)?.result?.questions || [];
+      const previousRow = previousQuestion ? getQuestionRow(historyQuestions, previousQuestion) : null;
+      const nextRow = getQuestionRow(historyQuestions, nextQuestion);
       selectedExamHistoryId = recordId;
       selectedExamHistoryQuestion = { recordId, questionNumber: nextQuestion };
       suppressHistoryExpansionAnimation = previousRow === nextRow;

@@ -751,6 +751,10 @@ h2 {
   font-size: 14px;
 }
 
+.exam-field-wide select {
+  min-width: 220px;
+}
+
 .exam-field select:focus {
   outline: none;
   border-color: #0071e3;
