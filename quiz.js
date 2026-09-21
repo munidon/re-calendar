@@ -13,7 +13,8 @@ import { QUIZ_BANK, QUIZ_SUBJECTS, QUIZ_SUBJECT_ORDER } from './assets/quiz/quiz
 import { mutate } from './assets/quiz/quiz-mutator.js';
 
 const QUIZ_BLANKS = 30;                 // 한 회차에 푸는 빈칸 수
-const QUIZ_SECONDS = 5 * 60;            // 빈칸 하나당 10초 — 붙잡고 있지 말고 바로 고르는 속도
+// 제한시간은 두지 않는다. 탭 이름의 "5분"은 목표 감각일 뿐이고,
+// 실제로 걸린 시간만 스톱워치로 재서 결과와 기록에 남긴다.
 const BLANKS_PER_SUBJECT = QUIZ_BLANKS / QUIZ_SUBJECT_ORDER.length;
 const MAX_BLANKS_PER_ITEM = 3;          // 한 지문에서 뚫는 빈칸 수 상한
 const REVIEW_PER_SUBJECT = 2;           // 과목별 복습 빈칸 상한
@@ -29,7 +30,6 @@ const QUIZ_HISTORY_LIMIT = 20;
 const GREEN_RE = /\{\{([\s\S]*?)\}\}/g;
 
 let quizSession = null;
-let quizTimerId = null;
 
 const itemKey = item => `${item.s}-${item.n}`;
 const BANK_BY_KEY = new Map(QUIZ_BANK.map(item => [itemKey(item), item]));
@@ -303,7 +303,7 @@ function renderQuizIntro(container) {
         <li>한 바퀴를 도는 동안 <strong>같은 지문은 다시 나오지 않습니다.</strong></li>
         <li>틀린 빈칸은 <strong>복습 대기</strong>에 올라가 다음 회차에 우선 출제됩니다.</li>
         <li>강조 구간이 너무 길거나 바꿀 만한 곳이 없는 지문은 <strong>원문 그대로</strong> 제시됩니다(채점 제외).</li>
-        <li>제한시간은 <strong>${Math.round(QUIZ_SECONDS / 60)}분</strong>, 시간이 다 되면 자동 제출됩니다.</li>
+        <li>제한시간은 없습니다. 걸린 시간만 재서 기록에 남습니다 — <strong>5분</strong>을 목표로 풀어 보세요.</li>
       </ul>
       <div class="quiz-progress-table">${progressRows}</div>
       <button class="btn btn-confirm" id="quizStartBtn">퀴즈 시작</button>
@@ -362,7 +362,6 @@ function questionHead(question, index, extra = '') {
 function renderQuizSolver(container) {
   const totalBlanks = countBlanks(quizSession.questions);
   const answered = Object.values(quizSession.answers).filter(Boolean).length;
-  const remaining = Math.ceil((quizSession.deadline - Date.now()) / 1000);
 
   const questionsHtml = quizSession.questions.map((question, index) => `
     <li class="quiz-item ${question.blanks.length ? '' : 'is-reference'}">
@@ -374,7 +373,6 @@ function renderQuizSolver(container) {
   container.innerHTML = `
     <div class="quiz-toolbar">
       <div class="quiz-progress"><strong id="quizAnswered">${answered}</strong> / ${totalBlanks} 응답</div>
-      <div class="quiz-timer" id="quizTimer">${formatClock(remaining)}</div>
       <div class="quiz-actions">
         <button class="exam-small-btn" id="quizAbortBtn">그만두기</button>
         <button class="btn btn-confirm" id="quizSubmitBtn">제출</button>
@@ -397,8 +395,8 @@ function renderQuizSolver(container) {
     select.classList.toggle('is-filled', Boolean(select.value));
   });
 
-  document.getElementById('quizSubmitBtn').addEventListener('click', () => submitQuiz(false));
-  document.getElementById('quizSubmitBottomBtn').addEventListener('click', () => submitQuiz(false));
+  document.getElementById('quizSubmitBtn').addEventListener('click', () => submitQuiz());
+  document.getElementById('quizSubmitBottomBtn').addEventListener('click', () => submitQuiz());
   document.getElementById('quizAbortBtn').addEventListener('click', abortQuiz);
 }
 
@@ -453,7 +451,6 @@ function renderQuizResult(container) {
         <div>정답률 <strong>${result.total ? Math.round((result.correct / result.total) * 100) : 0}%</strong></div>
         ${result.referenceCount ? `<div class="quiz-ref-note">원문 그대로 제시된 <strong>${result.referenceCount}지문</strong>은 채점에서 제외했습니다.</div>` : ''}
         ${result.reviewAdded ? `<div class="quiz-ref-note">틀린 <strong>${result.reviewAdded}개</strong>를 복습 대기에 담았습니다.</div>` : ''}
-        ${result.timedOut ? '<div class="quiz-timeout">시간 종료로 자동 제출되었습니다.</div>' : ''}
       </div>
       <button class="btn btn-confirm" id="quizRestartBtn">새 퀴즈</button>
     </div>
@@ -476,47 +473,19 @@ function startQuiz() {
     questions,
     answers: {},
     startedAt: Date.now(),
-    deadline: Date.now() + QUIZ_SECONDS * 1000,
     result: null
   };
   renderQuiz();
-  startQuizTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function startQuizTimer() {
-  stopQuizTimer();
-  quizTimerId = setInterval(() => {
-    if (!quizSession || quizSession.result) {
-      stopQuizTimer();
-      return;
-    }
-    const remaining = Math.ceil((quizSession.deadline - Date.now()) / 1000);
-    const timer = document.getElementById('quizTimer');
-    if (timer) {
-      timer.textContent = formatClock(remaining);
-      timer.classList.toggle('is-urgent', remaining <= 30);
-    }
-    if (remaining <= 0) submitQuiz(true);
-  }, 250);
-}
-
-function stopQuizTimer() {
-  if (quizTimerId) {
-    clearInterval(quizTimerId);
-    quizTimerId = null;
-  }
-}
-
-function submitQuiz(timedOut) {
+function submitQuiz() {
   if (!quizSession || quizSession.result) return;
 
   const totalBlanks = countBlanks(quizSession.questions);
   const answered = Object.values(quizSession.answers).filter(Boolean).length;
   const unanswered = totalBlanks - answered;
-  if (!timedOut && unanswered > 0 && !confirm(`미응답 ${unanswered}개가 있습니다. 그대로 제출할까요?`)) return;
-
-  stopQuizTimer();
+  if (unanswered > 0 && !confirm(`미응답 ${unanswered}개가 있습니다. 그대로 제출할까요?`)) return;
 
   const progress = loadProgress();
   const review = new Set(progress.review);
@@ -549,7 +518,7 @@ function submitQuiz(timedOut) {
   progress.review = [...review];
   saveProgress(progress);
 
-  const elapsedSeconds = Math.min(QUIZ_SECONDS, Math.round((Date.now() - quizSession.startedAt) / 1000));
+  const elapsedSeconds = Math.round((Date.now() - quizSession.startedAt) / 1000);
 
   quizSession.result = {
     correct,
@@ -557,8 +526,7 @@ function submitQuiz(timedOut) {
     bySubject,
     referenceCount,
     reviewAdded,
-    elapsed: formatClock(elapsedSeconds),
-    timedOut: Boolean(timedOut)
+    elapsed: formatClock(elapsedSeconds)
   };
 
   saveQuizRecord({
@@ -574,7 +542,6 @@ function submitQuiz(timedOut) {
 
 function abortQuiz() {
   if (!confirm('현재 퀴즈를 그만두고 처음 화면으로 돌아갈까요?')) return;
-  stopQuizTimer();
   quizSession = null;
   renderQuiz();
 }
