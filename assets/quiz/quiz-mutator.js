@@ -71,7 +71,7 @@ const PREDICATES = [
   ['하여야 한다', '할 수 있다'],
   ['해야 한다', '할 수 있다'],
   ['것은 아니다', '것이다'],
-  ['안 된다', '된다'],
+  ['안 된다', '된다', 'oneWay'],
   ['하지 아니한다', '한다'],
   ['하지 않는다', '한다'],
   ['되지 아니한다', '된다'],
@@ -196,8 +196,47 @@ const BOUNDARIES = [['이상', '초과'], ['초과', '이상']];
 
 // ───────────────────────────── 유틸 ─────────────────────────────
 
+/* 바꿔 넣은 낱말의 받침에 맞춰 뒤따르는 조사를 고친다.
+   인가를 → 승인를 (X) → 승인을 (O) */
+const PARTICLE_FIXES = [
+  ['을', '를'], ['은', '는'], ['이', '가'], ['과', '와'], ['으로', '로'], ['이나', '나']
+];
+
+function hasFinalConsonant(word) {
+  const last = word.charCodeAt(word.length - 1);
+  if (last < 0xac00 || last > 0xd7a3) return false; // 한글 음절이 아니면 판단하지 않는다
+  return (last - 0xac00) % 28 !== 0;
+}
+
+function fixParticle(text, index, word) {
+  const rest = text.slice(index + word.length);
+  if (!/[가-힣]$/.test(word)) return text;
+
+  const batchim = hasFinalConsonant(word);
+  // '로 / 으로'는 ㄹ 받침 뒤에서 '로'를 쓴다
+  const rieul = batchim && (text.charCodeAt(index + word.length - 1) - 0xac00) % 28 === 8;
+
+  for (const [withBatchim, withoutBatchim] of PARTICLE_FIXES) {
+    const isRoPair = withBatchim === '으로';
+    const wanted = isRoPair
+      ? (batchim && !rieul ? withBatchim : withoutBatchim)
+      : (batchim ? withBatchim : withoutBatchim);
+    const wrong = wanted === withBatchim ? withoutBatchim : withBatchim;
+
+    // 조사 자리인지 확인: 조사 뒤가 어미·공백·문장부호여야 한다
+    if (!rest.startsWith(wrong)) continue;
+    const after = rest.slice(wrong.length);
+    if (after && /^[가-힣]/.test(after) && !/^(\s|$)/.test(after)) {
+      if (!/^(는|은|도|만|써|서|부터|까지)/.test(after)) continue;
+    }
+    return text.slice(0, index) + word + wanted + after;
+  }
+  return text;
+}
+
 function replaceAt(text, index, length, replacement) {
-  return text.slice(0, index) + replacement + text.slice(index + length);
+  const merged = text.slice(0, index) + replacement + text.slice(index + length);
+  return fixParticle(merged, index, replacement);
 }
 
 function allIndexesOf(text, token) {
@@ -229,26 +268,68 @@ function formatNumber(value) {
   return value >= 1000 ? value.toLocaleString('en-US') : String(value);
 }
 
+/* 짧고 흔한 낱말은 다른 낱말의 일부일 때 바꾸면 없는 용어가 만들어진다
+   (신청정보 → 직권정보, 공동구 → 단독구). 그래서 낱말로 홀로 설 때만 바꾼다. */
+const STRICT_STANDALONE = new Set(['단독', '공동', '직권', '신청', '촉탁']);
+const SOFT_STANDALONE = new Set([
+  '소멸', '존속', '증명', '추정', '간주', '전부', '일부', '포함', '제외',
+  '직접', '간접', '현재', '장래', '유효', '무효', '취소', '적법', '위법',
+  '선의', '악의', '고의', '과실', '해지', '해제', '갱신', '종료', '공유', '합유'
+]);
+
+/* 붙여 써도 바꾼 결과가 실제로 쓰이는 용어가 되는 예외 */
+const COMPOUND_ALLOW = [
+  '단독주택', '공동주택', '단독신청', '공동신청', '직권말소', '신청말소',
+  '해제조건', '해지조건', '공유물', '합유물', '무효행위', '취소행위'
+];
+
+const PARTICLE_RE = /^(으로|로|은|는|이|가|을|를|에|의|와|과|도|만|까지|부터|이나|이며|이고|이라|일)/;
+const VERB_TAIL_RE = /^(하|한|할|함|해|된|될|되|시)/;
+
+// token 이 text[index] 위치에서 "낱말로 홀로 서 있는지" 판단한다.
+function isStandaloneAt(text, index, token) {
+  const strict = STRICT_STANDALONE.has(token);
+  if (!strict && !SOFT_STANDALONE.has(token)) return true;
+
+  const isHangul = ch => Boolean(ch) && /[가-힣]/.test(ch);
+  if (isHangul(text[index - 1])) return false; // 앞에 한글이 붙으면 합성어
+
+  const rest = text.slice(index + token.length);
+  if (COMPOUND_ALLOW.some(word => text.startsWith(word, index))) return true;
+
+  // 단독·직권 계열은 "단독으로 / 직권에 따라" 같은 부사어 자리에서만 바꾼다.
+  // "일괄하여 신청"의 신청처럼 서술어 자리에 있으면 바꿀 수 없다.
+  if (strict) return /^(으로|로|에|의)/.test(rest);
+
+  if (!isHangul(rest[0])) return true;         // 뒤가 조사·기호·끝이면 안전
+  if (PARTICLE_RE.test(rest)) return true;
+  // 소멸한다 → 존속한다 처럼 양쪽 다 용언이 되는 낱말만 어미를 허용한다
+  return VERB_TAIL_RE.test(rest);
+}
+
 // ─────────────────────── 유형별 후보 수집 ───────────────────────
 
 // 두 항목이 모두 있으면 서로 맞바꾸고, 하나만 있으면 반대말로 치환한다.
+// 합성어 속에 묻힌 낱말은 건드리지 않는다(isStandaloneAt).
 function collectPairOps(text, pairs, type) {
   const ops = [];
   for (const [a, b] of pairs) {
-    const hasA = text.includes(a);
-    const hasB = text.includes(b);
-    if (!hasA && !hasB) continue;
-    if (hasA && hasB) {
+    const spotsA = allIndexesOf(text, a).filter(i => isStandaloneAt(text, i, a));
+    const spotsB = allIndexesOf(text, b).filter(i => isStandaloneAt(text, i, b));
+    if (!spotsA.length && !spotsB.length) continue;
+
+    if (spotsA.length && spotsB.length) {
       ops.push({
         type,
         apply: () => text.split(a).join('\u0000').split(b).join(a).split('\u0000').join(b)
       });
-    } else {
-      const from = hasA ? a : b;
-      const to = hasA ? b : a;
-      for (const idx of allIndexesOf(text, from)) {
-        ops.push({ type, apply: () => replaceAt(text, idx, from.length, to) });
-      }
+      continue;
+    }
+
+    const from = spotsA.length ? a : b;
+    const to = spotsA.length ? b : a;
+    for (const idx of (spotsA.length ? spotsA : spotsB)) {
+      ops.push({ type, apply: () => replaceAt(text, idx, from.length, to) });
     }
   }
   return ops;
@@ -256,9 +337,9 @@ function collectPairOps(text, pairs, type) {
 
 // 앞쪽(더 구체적인) 규칙부터 훑어 처음 걸리는 규칙만 쓴다. 양쪽 방향 모두 시도한다.
 function collectDirectedOps(text, rules, type, bidirectional = true) {
-  for (const [a, b] of rules) {
+  for (const [a, b, oneWay] of rules) {
     const ops = [];
-    const tries = bidirectional ? [[a, b], [b, a]] : [[a, b]];
+    const tries = (bidirectional && !oneWay) ? [[a, b], [b, a]] : [[a, b]];
     for (const [from, to] of tries) {
       for (const idx of allIndexesOf(text, from)) {
         ops.push({ type, apply: () => replaceAt(text, idx, from.length, to) });

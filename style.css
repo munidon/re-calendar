@@ -1992,3 +1992,28 @@ button.history-question {
     width: 100%;
   }
 }
+
+/* 원문 그대로 제시되는 문항 */
+.quiz-item.is-reference {
+  border-color: #cfe9d5;
+  background: #fbfdfb;
+}
+
+.quiz-ref-badge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #34a853;
+  background: #eaf6ec;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.quiz-item.is-reference .quiz-mark {
+  color: #34a853;
+  background: #eaf6ec;
+}
+
+.quiz-ref-note {
+  color: #34a853;
+}

@@ -8,6 +8,9 @@ import { mutate } from './assets/quiz/quiz-mutator.js';
 
 const QUIZ_SIZE = 20;
 const QUIZ_SECONDS = 5 * 60;
+// 이보다 긴 강조 구간은 빈칸으로 뚫지 않는다. 드롭다운에 문장이 통째로 들어가면
+// 키워드를 묻는 문제가 아니게 되기 때문. (강조 구간의 90%가 29자 이내)
+const MAX_BLANK_LENGTH = 35;
 const QUIZ_HISTORY_KEY = 'quizHistory';
 const QUIZ_HISTORY_LIMIT = 20;
 
@@ -58,26 +61,39 @@ function splitSegments(text) {
 
 // ───────────────────────── 출제 ─────────────────────────
 
-// 지문 하나를 문항으로 만든다. 변형이 불가능한 지문이면 null.
+// 지문 하나를 문항으로 만든다.
+// 강조 구간이 너무 길거나 마땅히 바꿀 만한 곳이 없으면 빈칸을 만들지 않고
+// 원문 그대로 제시한다(= 풀지 않아도 옳은 선지).
 function buildQuestion(item, rng) {
   const segments = splitSegments(item.t);
-  const greenIndexes = segments.reduce((acc, seg, i) => (seg.green ? acc.concat(i) : acc), []);
+  const base = {
+    subject: item.s,
+    number: item.n,
+    segments
+  };
 
-  for (const index of shuffle(greenIndexes, rng)) {
+  const candidates = shuffle(
+    segments.reduce((acc, seg, i) => (seg.green ? acc.concat(i) : acc), []),
+    rng
+  )
+    .filter(index => segments[index].text.length <= MAX_BLANK_LENGTH)
+    .sort((a, b) => segments[a].text.length - segments[b].text.length); // 짧은 키워드 우선
+
+  for (const index of candidates) {
     const answer = segments[index].text;
     const mutated = mutate(answer, rng);
     if (!mutated) continue;
     return {
-      subject: item.s,
-      number: item.n,
-      segments,
+      ...base,
+      kind: 'blank',
       blankIndex: index,
       answer,
       mutationType: mutated.type,
       options: shuffle([answer, mutated.text], rng)
     };
   }
-  return null;
+
+  return { ...base, kind: 'reference', blankIndex: -1, answer: null };
 }
 
 // 전과목 균등 배분: 6과목 × 3문항 = 18문항을 깔고,
@@ -100,30 +116,24 @@ function buildQuiz(rng = Math.random) {
 
   const questions = [];
   for (const subject of QUIZ_SUBJECT_ORDER) {
-    let picked = 0;
-    for (const item of pools[subject]) {
-      if (picked >= quota[subject]) break;
-      const question = buildQuestion(item, rng);
-      if (!question) continue;
-      questions.push(question);
-      picked++;
-    }
-  }
-
-  // 변형 불가 지문 때문에 과목별 할당을 못 채웠다면 남은 지문으로 채운다.
-  if (questions.length < QUIZ_SIZE) {
-    const used = new Set(questions.map(q => `${q.subject}-${q.number}`));
-    for (const item of shuffle(QUIZ_BANK, rng)) {
-      if (questions.length >= QUIZ_SIZE) break;
-      if (used.has(`${item.s}-${item.n}`)) continue;
-      const question = buildQuestion(item, rng);
-      if (!question) continue;
-      used.add(`${item.s}-${item.n}`);
-      questions.push(question);
-    }
+    pools[subject].slice(0, quota[subject]).forEach(item => {
+      questions.push(buildQuestion(item, rng));
+    });
   }
 
   return shuffle(questions, rng).slice(0, QUIZ_SIZE);
+}
+
+function isAnswered(question, answer) {
+  return question.kind === 'reference' || Boolean(answer);
+}
+
+function isCorrect(question, answer) {
+  return question.kind === 'reference' || answer === question.answer;
+}
+
+function countBlankQuestions(questions) {
+  return questions.filter(question => question.kind === 'blank').length;
 }
 
 // ───────────────────────── 기록 ─────────────────────────
@@ -189,6 +199,7 @@ function renderQuizIntro(container) {
       <ul class="quiz-rules">
         <li>원본에서 초록색으로 강조된 구간 하나가 빈칸으로 바뀝니다.</li>
         <li>빈칸마다 <strong>원문</strong>과 <strong>변형문</strong> 두 개가 드롭다운으로 제시됩니다.</li>
+        <li>강조 구간이 너무 길거나 바꿀 만한 곳이 없는 지문은 <strong>원문 그대로</strong> 제시되며 정답 처리됩니다.</li>
         <li>제한시간은 <strong>5분</strong>, 시간이 다 되면 자동 제출됩니다.</li>
       </ul>
       <p class="quiz-bank-note">수록 지문: ${escapeHtml(counts)}</p>
@@ -205,7 +216,8 @@ function renderQuestionBody(question, index, options) {
   const selected = quizSession.answers[index];
 
   return question.segments.map((segment, segmentIndex) => {
-    if (segmentIndex === question.blankIndex) {
+    // 원문 그대로 내는 문항은 빈칸 없이 강조만 살려 보여 준다.
+    if (question.kind === 'blank' && segmentIndex === question.blankIndex) {
       if (graded) {
         const correct = selected === question.answer;
         const chosen = selected == null ? '(미응답)' : selected;
@@ -228,15 +240,17 @@ function renderQuestionBody(question, index, options) {
 }
 
 function renderQuizSolver(container) {
+  const blankTotal = countBlankQuestions(quizSession.questions);
   const answered = quizSession.answers.filter(Boolean).length;
   const remaining = Math.ceil((quizSession.deadline - Date.now()) / 1000);
 
   const questionsHtml = quizSession.questions.map((question, index) => `
-    <li class="quiz-item">
+    <li class="quiz-item ${question.kind === 'reference' ? 'is-reference' : ''}">
       <div class="quiz-item-head">
         <span class="quiz-no">${index + 1}</span>
         <span class="quiz-subject">${escapeHtml(QUIZ_SUBJECTS[question.subject] || question.subject)}</span>
         <span class="quiz-origin">지문 ${String(question.number).padStart(2, '0')}</span>
+        ${question.kind === 'reference' ? '<span class="quiz-ref-badge">원문 그대로</span>' : ''}
       </div>
       <p class="quiz-sentence">${renderQuestionBody(question, index, { graded: false })}</p>
     </li>
@@ -244,7 +258,7 @@ function renderQuizSolver(container) {
 
   container.innerHTML = `
     <div class="quiz-toolbar">
-      <div class="quiz-progress"><strong id="quizAnswered">${answered}</strong> / ${quizSession.questions.length} 응답</div>
+      <div class="quiz-progress"><strong id="quizAnswered">${answered}</strong> / ${blankTotal} 응답</div>
       <div class="quiz-timer" id="quizTimer">${formatClock(remaining)}</div>
       <div class="quiz-actions">
         <button class="exam-small-btn" id="quizAbortBtn">그만두기</button>
@@ -289,14 +303,15 @@ function renderQuizResult(container) {
 
   const reviewHtml = quizSession.questions.map((question, index) => {
     const selected = quizSession.answers[index];
-    const correct = selected === question.answer;
+    const reference = question.kind === 'reference';
+    const correct = isCorrect(question, selected);
     return `
-      <li class="quiz-item ${correct ? 'is-correct' : 'is-wrong'}">
+      <li class="quiz-item ${reference ? 'is-reference' : correct ? 'is-correct' : 'is-wrong'}">
         <div class="quiz-item-head">
           <span class="quiz-no">${index + 1}</span>
           <span class="quiz-subject">${escapeHtml(QUIZ_SUBJECTS[question.subject] || question.subject)}</span>
           <span class="quiz-origin">지문 ${String(question.number).padStart(2, '0')}</span>
-          <span class="quiz-mark">${correct ? '정답' : '오답'}</span>
+          <span class="quiz-mark">${reference ? '원문' : correct ? '정답' : '오답'}</span>
         </div>
         <p class="quiz-sentence">${renderQuestionBody(question, index, { graded: true })}</p>
         ${correct ? '' : `
@@ -316,7 +331,12 @@ function renderQuizResult(container) {
       </div>
       <div class="quiz-result-meta">
         <div>소요 시간 <strong>${escapeHtml(result.elapsed)}</strong></div>
-        <div>정답률 <strong>${Math.round((result.correct / result.total) * 100)}%</strong></div>
+        ${result.blankTotal
+          ? `<div>선택 문항 <strong>${result.blankCorrect} / ${result.blankTotal}</strong> (${Math.round((result.blankCorrect / result.blankTotal) * 100)}%)</div>`
+          : ''}
+        ${result.referenceTotal
+          ? `<div class="quiz-ref-note">원문 그대로 제시된 <strong>${result.referenceTotal}문항</strong>은 정답 처리했습니다.</div>`
+          : ''}
         ${result.timedOut ? '<div class="quiz-timeout">시간 종료로 자동 제출되었습니다.</div>' : ''}
       </div>
       <button class="btn btn-confirm" id="quizRestartBtn">새 퀴즈</button>
@@ -374,7 +394,9 @@ function stopQuizTimer() {
 function submitQuiz(timedOut) {
   if (!quizSession || quizSession.result) return;
 
-  const unanswered = quizSession.answers.filter(answer => !answer).length;
+  const unanswered = quizSession.questions.filter(
+    (question, index) => !isAnswered(question, quizSession.answers[index])
+  ).length;
   if (!timedOut && unanswered > 0 && !confirm(`미응답 ${unanswered}문항이 있습니다. 그대로 제출할까요?`)) return;
 
   stopQuizTimer();
@@ -382,11 +404,11 @@ function submitQuiz(timedOut) {
   const bySubject = {};
   let correct = 0;
   quizSession.questions.forEach((question, index) => {
-    const isCorrect = quizSession.answers[index] === question.answer;
-    if (isCorrect) correct++;
+    const ok = isCorrect(question, quizSession.answers[index]);
+    if (ok) correct++;
     const stat = bySubject[question.subject] || (bySubject[question.subject] = { correct: 0, total: 0 });
     stat.total++;
-    if (isCorrect) stat.correct++;
+    if (ok) stat.correct++;
   });
 
   const elapsedSeconds = Math.min(
@@ -394,9 +416,15 @@ function submitQuiz(timedOut) {
     Math.round((Date.now() - quizSession.startedAt) / 1000)
   );
 
+  const blankTotal = countBlankQuestions(quizSession.questions);
+  const referenceTotal = quizSession.questions.length - blankTotal;
+
   quizSession.result = {
     correct,
     total: quizSession.questions.length,
+    blankTotal,
+    referenceTotal,
+    blankCorrect: correct - referenceTotal,
     bySubject,
     elapsed: formatClock(elapsedSeconds),
     timedOut: Boolean(timedOut)
@@ -404,8 +432,8 @@ function submitQuiz(timedOut) {
 
   saveQuizRecord({
     date: new Date().toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' }),
-    correct,
-    total: quizSession.result.total,
+    correct: quizSession.result.blankCorrect,
+    total: quizSession.result.blankTotal,
     elapsed: quizSession.result.elapsed
   });
 
