@@ -1,6 +1,7 @@
 // 지문 변형(오답 선지 생성) 엔진
 // 출제자가 실제로 쓰는 14가지 변형 유형을 규칙으로 구현한다.
-// 주의: "이하 / 미만"은 실제 시험에서 건드리지 않는 조사이므로 절대 변형하지 않는다.
+// 주의: 이상·이하·초과·미만 같은 경계 조사는 실제 시험에서 바꾸지 않으므로
+//       변형 대상에서 완전히 제외한다. 숫자만 바꾸고 조사는 원문 그대로 둔다.
 
 /* ── 유형 04·09 : 당사자 교환 / 닮은 개념 교환 (대칭 쌍 맞바꾸기) ── */
 const SWAP_PAIRS = [
@@ -190,9 +191,6 @@ const NUMBER_LADDERS = {
 };
 const NUMBER_UNIT_RE = /(\d[\d,]*)\s*(개월|억원|천만원|만원|시간|세대|일|년|월|층|명|호|점|배|%)/g;
 const FRACTION_RE = /(\d+)분의\s*(\d+)/g;
-
-/* ── 유형 03 : 경계 조사 (이상 ↔ 초과 만) ── */
-const BOUNDARIES = [['이상', '초과'], ['초과', '이상']];
 
 // ───────────────────────────── 유틸 ─────────────────────────────
 
@@ -477,17 +475,6 @@ function collectNumberOps(text, rng) {
   return ops;
 }
 
-// 이상 ↔ 초과 만 허용. 이하·미만은 원문 그대로 둔다.
-function collectBoundaryOps(text) {
-  const ops = [];
-  for (const [from, to] of BOUNDARIES) {
-    for (const idx of allIndexesOf(text, from)) {
-      ops.push({ type: '경계 조사', apply: () => replaceAt(text, idx, from.length, to) });
-    }
-  }
-  return ops;
-}
-
 // ───────────────────────────── 진입점 ─────────────────────────────
 
 /**
@@ -504,7 +491,6 @@ export function mutate(original, rng = Math.random) {
     ...collectNumberOps(text, rng),
     ...collectArticleOps(text, rng),
     ...collectListOps(text),
-    ...collectBoundaryOps(text),
     ...collectPairOps(text, DIRECTIONS, '방향 반전'),
     ...collectPairOps(text, CONCEPTS, '닮은 개념 교환'),
     ...collectCycleOps(text, ACT_FORMS, '행위 형식 교체', rng),

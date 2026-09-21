@@ -11,6 +11,9 @@ const QUIZ_SECONDS = 5 * 60;
 // 이보다 긴 강조 구간은 빈칸으로 뚫지 않는다. 드롭다운에 문장이 통째로 들어가면
 // 키워드를 묻는 문제가 아니게 되기 때문. (강조 구간의 90%가 29자 이내)
 const MAX_BLANK_LENGTH = 35;
+// 한 회차에 원문 그대로 나가는 문항의 상한. 이를 넘으면 같은 과목의 다른 지문으로
+// 바꿔 끼워 풀 거리가 남도록 한다.
+const MAX_REFERENCE_QUESTIONS = 6;
 const QUIZ_HISTORY_KEY = 'quizHistory';
 const QUIZ_HISTORY_LIMIT = 20;
 
@@ -115,10 +118,27 @@ function buildQuiz(rng = Math.random) {
   });
 
   const questions = [];
+  const leftovers = {};
   for (const subject of QUIZ_SUBJECT_ORDER) {
     pools[subject].slice(0, quota[subject]).forEach(item => {
       questions.push(buildQuestion(item, rng));
     });
+    leftovers[subject] = pools[subject].slice(quota[subject]);
+  }
+
+  // 뽑기 운에 따라 원문 문항만 잔뜩 걸리면 풀 게 없는 회차가 된다.
+  // 상한을 넘으면 같은 과목의 남은 지문 중 빈칸을 만들 수 있는 것으로 바꿔 끼운다.
+  let excess = questions.filter(q => q.kind === 'reference').length - MAX_REFERENCE_QUESTIONS;
+  for (let i = 0; i < questions.length && excess > 0; i++) {
+    if (questions[i].kind !== 'reference') continue;
+    const pool = leftovers[questions[i].subject];
+    while (pool.length) {
+      const replacement = buildQuestion(pool.shift(), rng);
+      if (replacement.kind !== 'blank') continue;
+      questions[i] = replacement;
+      excess--;
+      break;
+    }
   }
 
   return shuffle(questions, rng).slice(0, QUIZ_SIZE);
