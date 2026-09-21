@@ -117,6 +117,25 @@ function rollCycle(progress, subject, rng) {
 
 // ───────────────────────── 출제 ─────────────────────────
 
+/* 손으로 검토해 걸러낸 자리.
+   바꾼 쪽도 맞는 말이 되어 정답을 가릴 수 없거나, 법령 고정 표현이라
+   바꾸면 없는 말이 되는 강조 구간이다. 빈칸으로 뚫지 않고 원문 그대로 보여 준다.
+   - 민법 44  상가 갱신거절 통지는 임대인이 하는 것이라 '임대인'도 맞는 말이 된다
+   - 학개론 49 표준단독주택가격도 국토교통부장관이 공시하므로 '단독주택가격'도 참이 된다
+   - 세법 43  면적 증감과 조정금 징수/지급이 맞물려 조합에 따라 참이 될 수 있다
+   - 민법 07  '지정 해제'가 법령 고정 표현이라 '지정 해지'는 없는 말이다 */
+const BLANK_EXCLUSIONS = new Map([
+  ['민법-44', ['상가 임차인']],
+  ['학개론-49', ['공동주택가격을 결정·공시']],
+  ['세법-43', ['면적이 증가', '징수한 조정금은 취득가액에서 제외']],
+  ['민법-7', ['허가구역 지정 해제 후']]
+]);
+
+function isExcludedBlank(key, text) {
+  const list = BLANK_EXCLUSIONS.get(key);
+  return Boolean(list) && list.includes(text);
+}
+
 // "A가 오르면 B는 내린다" 처럼 인과로 묶인 두 자리를 모두 뚫고 양쪽 다 뒤집으면
 // 그 문장도 참이 되어 버린다(수익률 하락 → MBS 가격 상승). 제대로 아는 사람이
 // 오답 처리되므로, 이런 짝은 한쪽만 뚫는다.
@@ -142,6 +161,7 @@ function isCoupledReversal(segments, kept, candidate) {
  * 빈칸을 하나도 못 만들면 blanks 가 빈 배열 = "원문 그대로" 지문.
  */
 function buildItem(item, rng, limit, onlyIndex = null) {
+  const key = itemKey(item);
   const segments = splitSegments(item.t);
   const greenIndexes = segments.reduce((acc, seg, i) => (seg.green ? acc.concat(i) : acc), []);
 
@@ -156,6 +176,7 @@ function buildItem(item, rng, limit, onlyIndex = null) {
     if (blanks.length >= limit) break;
     const segment = segments[index];
     if (!segment || !segment.green || segment.text.length > MAX_BLANK_LENGTH) continue;
+    if (isExcludedBlank(key, segment.text)) continue;
     const mutated = mutate(segment.text, rng);
     if (!mutated) continue;
     const candidate = {
@@ -169,7 +190,7 @@ function buildItem(item, rng, limit, onlyIndex = null) {
   }
 
   blanks.sort((a, b) => a.segmentIndex - b.segmentIndex);
-  return { subject: item.s, number: item.n, key: itemKey(item), segments, blanks };
+  return { subject: item.s, number: item.n, key, segments, blanks };
 }
 
 function buildQuiz(rng = Math.random) {
