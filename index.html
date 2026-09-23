@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>공인중개사 수강 캘린더</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <div class="container">
@@ -14,6 +14,7 @@
         <button class="main-tab-btn active" data-view="calendar" type="button">캘린더</button>
         <button class="main-tab-btn" data-view="exam" type="button">기출문제</button>
         <button class="main-tab-btn" data-view="quiz" type="button">5분 퀴즈</button>
+        <button class="main-tab-btn" data-view="lawquiz" type="button">공법 퀴즈</button>
       </nav>
 
       <!-- 기기 코드 -->
@@ -75,6 +76,14 @@
         <div id="quizPractice"></div>
       </section>
     </div>
+
+    <div class="app-view" id="lawQuizView" hidden>
+      <!-- 섹션 6: 공법 퀴즈 -->
+      <section class="quiz-section">
+        <h2>공법 퀴즈</h2>
+        <div id="lawQuizPractice"></div>
+      </section>
+    </div>
   </div>
 
   <!-- 세부계획서 FAB -->
@@ -107,6 +116,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script type="module" src="app.js?v=10"></script>
+  <script type="module" src="app.js?v=11"></script>
 </body>
 </html>
