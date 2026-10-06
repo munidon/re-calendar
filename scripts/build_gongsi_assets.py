@@ -103,6 +103,71 @@ OVERRIDES: dict[str, dict] = {
     },
 }
 
+# 원본 PDF의 오타·띄어쓰기를 바로잡은 목록: (문항, 원래 표기, 고친 표기)
+TEXT_FIXES = [
+    # 오타
+    ("p1-06", "식물으로", "식물을"),
+    ("p1-09", "황부지", "황무지"),
+    ("p2-13", "매입에 관한", "매립에 관한"),
+    ("p3-03", "공유수면매립 관리 및", "공유수면 관리 및"),
+    ("p3-07", "지적부불합지", "지적불부합지"),
+    ("p3-16", "관란 특별법", "관한 특별법"),
+    ("p3-18", "지적 및 임야도", "지적도 및 임야도"),
+    ("p3-20", "축적변경", "축척변경"),
+    ("p4-21", "중종이", "종중이"),
+    ("p6-13", "신청하고 한다", "신청하고자 한다"),
+    ("p6-13", "연원일", "연월일"),
+    ("p8-15", "청구권전 가등기", "청구권보전 가등기"),
+    # 문장부호·조사
+    ("p2-08", "기록 저장한", "기록·저장한"),
+    ("p3-20", "5일 측량검사기간", "5일, 측량검사기간"),
+    ("p5-11", "갈음할 수 있는 조치는", "갈음할 수 있는 조치는?"),
+    ("p7-12", "乙인 경우.", "乙인 경우,"),
+    ("p8-05", "1억 원)을", "1억 원)를"),
+    ("p8-05", "5천만 원)을", "5천만 원)를"),
+    ("p8-06", "E부동산이담보로", "E부동산이 담보로"),
+    # 띄어쓰기
+    ("p1-11", "법률 상", "법률상"),
+    ("p3-01", "법률 상", "법률상"),
+    ("p3-09", "법률 상", "법률상"),
+    ("p3-13", "법률 상", "법률상"),
+    ("p3-15", "법률 상", "법률상"),
+    ("p1-01", "조사·측량 하여", "조사·측량하여"),
+    ("p1-01", "결정 하려는", "결정하려는"),
+    ("p1-01", "지적 소관청", "지적소관청"),
+    ("p1-03", "지번부여 하는", "지번부여하는"),
+    ("p1-04", "임야 대장", "임야대장"),
+    ("p1-04", "‘산’자 를", "‘산’자를"),
+    ("p1-14", "끝수처리 하여야", "끝수처리하여야"),
+    ("p1-17", "부여 할 수", "부여할 수"),
+    ("p2-09", "아니 할 수", "아니할 수"),
+    ("p2-22", "등록 하여야", "등록하여야"),
+    ("p3-02", "완료사실 을", "완료사실을"),
+    ("p3-07", "( ㄱ ) 라고", "( ㄱ )라고"),
+    ("p3-08", "요청 할 수", "요청할 수"),
+    ("p3-13", "통지 하여야", "통지하여야"),
+    ("p4-17", "등기 의무자", "등기의무자"),
+    ("p7-01", "경료 되지", "경료되지"),
+    ("p7-05", "말소 할 수", "말소할 수"),
+    ("p7-09", "말소 할 수", "말소할 수"),
+    ("p7-15", "기록 한다", "기록한다"),
+]
+
+
+def apply_text_fixes(item: dict) -> None:
+    def fix(text: str) -> str:
+        for qid, old, new in TEXT_FIXES:
+            if qid == item["id"]:
+                text = text.replace(old, new)
+        return text
+
+    for key in ("stem", "box", "options", "explain"):
+        if isinstance(item.get(key), str):
+            item[key] = fix(item[key])
+        elif isinstance(item.get(key), list):
+            item[key] = [fix(v) for v in item[key]]
+
+
 CIRCLED = {"①": 1, "②": 2, "③": 3, "④": 4, "⑤": 5}
 
 
@@ -559,9 +624,17 @@ def main() -> None:
                 save(image, OUT_DIR / f"{qid}-fig.png")
                 item["figure"] = f"./assets/gongsi/{qid}-fig.png"
             item.update(OVERRIDES.get(qid, {}))
+            apply_text_fixes(item)
             if len(item["options"]) != 5:
                 problems.append(f"{qid}: 선택지 {len(item['options'])}개")
             items.append(item)
+
+    # 고칠 표기를 못 찾으면(원문이 바뀌었거나 오타) 알린다.
+    dump = {i["id"]: json.dumps(i, ensure_ascii=False) for i in items}
+    for qid, old, new in TEXT_FIXES:
+        text = dump.get(qid, "")
+        if new not in text or (old not in new and old in text):
+            problems.append(f"{qid}: 표기 수정 '{old}' → '{new}' 적용 안 됨")
 
     bank = OUT_DIR / "gongsi-bank.js"
     bank.write_text(
