@@ -3,6 +3,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { initQuiz } from './quiz.js';
 import { initLawQuiz } from './lawquiz.js';
+import { initGongsi } from './gongsi.js';
 
 // ===== Firebase 설정 =====
 
@@ -78,7 +79,8 @@ function renderMainTabs() {
     calendar: document.getElementById('calendarView'),
     exam: document.getElementById('examView'),
     quiz: document.getElementById('quizView'),
-    lawquiz: document.getElementById('lawQuizView')
+    lawquiz: document.getElementById('lawQuizView'),
+    gongsi: document.getElementById('gongsiView')
   };
 
   document.querySelectorAll('.main-tab-btn').forEach(btn => {
@@ -1572,6 +1574,7 @@ async function init() {
   renderExamHistory();
   initQuiz();
   initLawQuiz();
+  initGongsi();
   initPlanViewer();
 }
 

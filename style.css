@@ -2166,3 +2166,262 @@ button.history-question {
     width: auto;
   }
 }
+
+/* ===== 공시법 기출 ===== */
+.main-tabs {
+  flex-wrap: wrap;
+}
+
+.gongsi-cards {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.gongsi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #e8e8ed;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.gongsi-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gongsi-card-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.gongsi-card-count,
+.gongsi-card-desc,
+.gongsi-card-meta {
+  font-size: 12px;
+  color: #6e6e73;
+}
+
+.gongsi-card-count {
+  font-weight: 700;
+}
+
+.gongsi-card-bar {
+  margin-top: 4px;
+}
+
+.gongsi-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.gongsi-question {
+  padding: 18px;
+  border: 1px solid #e8e8ed;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.gongsi-source {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e6e73;
+}
+
+.gongsi-stem {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.gongsi-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #d1d1d6;
+  border-radius: 6px;
+  background: #fafafa;
+  font-size: 14px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.gongsi-box p + p {
+  margin-top: 6px;
+}
+
+.gongsi-table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.gongsi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.gongsi-table caption {
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.gongsi-table th,
+.gongsi-table td {
+  padding: 6px 8px;
+  border: 1px solid #c7c7cc;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.gongsi-table th {
+  background: #f2f2f7;
+  font-weight: 600;
+}
+
+.gongsi-figure {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px auto 0;
+}
+
+.gongsi-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  list-style: none;
+}
+
+.gongsi-option {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d1d6;
+  border-radius: 8px;
+  background: #fff;
+  color: #1d1d1f;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: left;
+  word-break: keep-all;
+  cursor: pointer;
+}
+
+.gongsi-option:hover:not(:disabled) {
+  border-color: #0071e3;
+  background: #f5f9ff;
+}
+
+.gongsi-option:disabled {
+  cursor: default;
+}
+
+.gongsi-option-mark {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.gongsi-option.is-answer {
+  border-color: #34c759;
+  background: #e8f5ee;
+  color: #1f7a3a;
+}
+
+.gongsi-option.is-wrong {
+  border-color: #ff3b30;
+  background: #fff0f0;
+  color: #bf1f1f;
+}
+
+.gongsi-question .answer-feedback {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.gongsi-question .answer-hint {
+  margin-top: 12px;
+}
+
+.gongsi-explain {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f5f5f7;
+  font-size: 14px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.gongsi-explain-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e6e73;
+}
+
+.gongsi-explain p + p {
+  margin-top: 4px;
+}
+
+.gongsi-nav {
+  max-width: 320px;
+  margin-left: auto;
+}
+
+.gongsi-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #34c759;
+  border-radius: 8px;
+  background: #e8f5ee;
+  color: #1f7a3a;
+  font-size: 13px;
+}
+
+.gongsi-summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .main-tabs {
+    flex-wrap: nowrap;
+  }
+
+  .main-tab-btn {
+    font-size: 12px;
+    padding: 10px 2px;
+    white-space: nowrap;
+  }
+
+  .gongsi-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .gongsi-question {
+    padding: 14px 12px;
+  }
+
+  .gongsi-nav {
+    max-width: none;
+  }
+}
