@@ -21,7 +21,7 @@
 | 데이터베이스 | Firebase Firestore (v10.8.0, CDN) |
 | 호스팅/배포 | Firebase |
 | PDF 렌더링 | PDF.js 3.11.174 (CDN) |
-| 에셋 빌드 | Python 3 (Pillow, NumPy, poppler-utils) |
+| 에셋 빌드 | Python 3 (Pillow, NumPy, poppler-utils, pdfminer.six) |
 
 빌드 도구나 번들러 없이 정적 파일만으로 동작합니다.
 
@@ -40,7 +40,7 @@ firestore.rules     # Firestore 보안 규칙
 plan.pdf            # 세부계획서
 assets/exams/       # 연도별 기출문제 이미지 및 JSON
 assets/quiz/        # 퀴즈 지문 데이터
-assets/gongsi/      # 공시법 기출 문항 이미지 및 정답
+assets/gongsi/      # 공시법 기출 문항 텍스트 · 정답 (그림 2개만 이미지)
 scripts/            # 기출문제 · 공시법 기출 에셋 생성 스크립트 (Python)
 ```
 

@@ -2,7 +2,7 @@
 // 「공시법 기출 문제풀이 과정 보충자료」 문항을 지적법(공간정보법) / 등기법(부동산등기법)으로
 // 나눠 한 문제씩 푼다. 시간 제한 없이 답을 고르면 바로 채점하고, 진행 상황은 이 기기에
 // 저장돼 이어 풀 수 있다. 여러 자료에 다시 실린 문항은 빌드 때 한 번만 남겼다.
-// 문항 이미지·정답은 scripts/build_gongsi_assets.py 로 만든다.
+// 문항 텍스트·정답은 scripts/build_gongsi_assets.py 로 PDF에서 뽑았다(그림 2개만 이미지).
 
 import { GONGSI_QUESTIONS } from './assets/gongsi/gongsi-bank.js';
 
@@ -81,6 +81,41 @@ function sourceLabel(q) {
 }
 
 // ───────────────────────── 렌더 ─────────────────────────
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// 발문과 선택지 사이의 자료: 보기 상자, 표(토지대장), 그림(지적도면 등)
+function renderMaterial(q) {
+  let html = '';
+  if (q.box) {
+    html += `<div class="gongsi-box">${q.box.map(line => `<p>${escapeHtml(line)}</p>`).join('')}</div>`;
+  }
+  if (q.table) {
+    const rows = q.table.rows.map(row => `<tr>${row.map(cell => {
+      const c = typeof cell === 'string' ? { t: cell } : cell;
+      const tag = c.head ? 'th' : 'td';
+      const span = c.span ? ` colspan="${c.span}"` : '';
+      return `<${tag}${span}>${escapeHtml(c.t).replace(/\n/g, '<br>')}</${tag}>`;
+    }).join('')}</tr>`).join('');
+    html += `
+      <div class="gongsi-table-wrap">
+        <table class="gongsi-table">
+          ${q.table.title ? `<caption>${escapeHtml(q.table.title)}</caption>` : ''}
+          ${rows}
+        </table>
+      </div>`;
+  }
+  if (q.figure) {
+    html += `<img class="gongsi-figure" src="${q.figure}" alt="문제 그림">`;
+  }
+  return html;
+}
 
 function renderGongsi() {
   const container = document.getElementById('gongsiPractice');
@@ -162,11 +197,18 @@ function renderSolver(container) {
   const stats = tally(list, state.answers);
   const finished = stats.answered === stats.total;
 
-  const buttons = [1, 2, 3, 4, 5].map(value => {
-    const classes = ['answer-btn'];
-    if (graded && value === q.answer) classes.push('answer-correct');
-    if (graded && value === chosen && !isCorrect) classes.push('answer-wrong');
-    return `<button class="${classes.join(' ')}" data-answer="${value}" ${graded ? 'disabled' : ''}>${CIRCLED[value]}</button>`;
+  const options = q.options.map((text, i) => {
+    const value = i + 1;
+    const classes = ['gongsi-option'];
+    if (graded && value === q.answer) classes.push('is-answer');
+    if (graded && value === chosen && !isCorrect) classes.push('is-wrong');
+    return `
+      <li>
+        <button class="${classes.join(' ')}" data-answer="${value}" ${graded ? 'disabled' : ''}>
+          <span class="gongsi-option-mark">${CIRCLED[value]}</span>
+          <span class="gongsi-option-text">${escapeHtml(text)}</span>
+        </button>
+      </li>`;
   }).join('');
 
   const feedback = graded
@@ -174,8 +216,13 @@ function renderSolver(container) {
       <div class="answer-feedback ${isCorrect ? 'correct' : 'wrong'}">
         <span class="answer-feedback-badge">${isCorrect ? '정답' : '오답'}</span>
         <span class="answer-feedback-detail">내 답 ${CIRCLED[chosen]} · 정답 ${CIRCLED[q.answer]}</span>
-      </div>`
-    : '<div class="answer-hint">답을 고르면 바로 채점됩니다. 키보드 1~5, ←/→ 도 쓸 수 있습니다.</div>';
+      </div>
+      ${q.explain ? `
+        <div class="gongsi-explain">
+          <div class="gongsi-explain-label">해설</div>
+          ${q.explain.map(line => `<p>${escapeHtml(line)}</p>`).join('')}
+        </div>` : ''}`
+    : '<div class="answer-hint">선택지를 누르면 바로 채점됩니다. 키보드 1~5, ←/→ 도 쓸 수 있습니다.</div>';
 
   const summary = finished
     ? `
@@ -200,25 +247,17 @@ function renderSolver(container) {
       </div>
     </div>
     ${summary}
-    <div class="question-layout">
-      <div class="question-card gongsi-question-card">
-        <div class="gongsi-source">${sourceLabel(q)}</div>
-        <img class="question-image" src="${q.image}" alt="${subject.title} ${state.index + 1}번 문제">
-        ${graded && q.explain ? `
-          <div class="gongsi-explain">
-            <img class="question-image" src="${q.explain}" alt="정답 및 해설">
-          </div>` : ''}
+    <article class="gongsi-question">
+      <div class="gongsi-source">${sourceLabel(q)}</div>
+      <p class="gongsi-stem"><strong>${state.index + 1}.</strong> ${escapeHtml(q.stem)}</p>
+      ${renderMaterial(q)}
+      <ol class="gongsi-options">${options}</ol>
+      ${feedback}
+      <div class="question-nav gongsi-nav">
+        <button class="btn btn-cancel" id="gongsiPrevBtn" ${state.index <= 0 ? 'disabled' : ''}>이전</button>
+        <button class="btn ${graded ? 'btn-confirm' : 'btn-cancel'}" id="gongsiNextBtn" ${state.index >= list.length - 1 ? 'disabled' : ''}>다음</button>
       </div>
-      <div class="answer-panel gongsi-answer-panel">
-        <div class="answer-label">답안 선택</div>
-        <div class="answer-buttons">${buttons}</div>
-        ${feedback}
-        <div class="question-nav">
-          <button class="btn btn-cancel" id="gongsiPrevBtn" ${state.index <= 0 ? 'disabled' : ''}>이전</button>
-          <button class="btn ${graded ? 'btn-confirm' : 'btn-cancel'}" id="gongsiNextBtn" ${state.index >= list.length - 1 ? 'disabled' : ''}>다음</button>
-        </div>
-      </div>
-    </div>
+    </article>
     <div class="question-map">
       ${list.map((item, i) => {
         let status = 'unanswered';
@@ -230,7 +269,7 @@ function renderSolver(container) {
     </div>
   `;
 
-  container.querySelectorAll('.answer-btn').forEach(btn => {
+  container.querySelectorAll('.gongsi-option').forEach(btn => {
     btn.addEventListener('click', () => choose(Number(btn.dataset.answer)));
   });
   container.querySelectorAll('.question-dot').forEach(btn => {
